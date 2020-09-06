@@ -43,9 +43,9 @@ cmake .. -DSPEED_TEST_ONLY=off
 - The model file name is specified in `ImageProcessor.cpp`
 - `InferenceHelperTensorRt.cpp` automatically convert model according to the model format (extension).
 	- `.onnx` : convert the model from onnx to trt, and save the converted trt model
-	- `.uff` : convert the model from uff to trt, and save the converted trt model
+	- `.uff` : convert the model from uff to trt, and save the converted trt model (WIP)
 	- `.trt` : use pre-converted trt model
-- I recommend you change the model filename once you conver the original onnx/uff model to save your time
+- I recommend you change the model filename once you conver the original onnx/uff model so that you can save your time
 - In the source code on GitHub, onnx/uff model is used because trt model is not compatible with another environment
 
 ### Model conversion settings
@@ -53,7 +53,7 @@ cmake .. -DSPEED_TEST_ONLY=off
 - USE_FP16
 	- define this for FP16 inference
 - USE_INT8
-	- define this for FP16 inference (you also need int8 calibration)
+	- define this for INT8 inference (you also need int8 calibration)
 - OPT_MAX_WORK_SPACE_SIZE
 	- `1 << 30`
 - OPT_AVG_TIMING_ITERATIONS
@@ -83,15 +83,14 @@ cmake .. -DSPEED_TEST_ONLY=off
 	 	- normalize parameter for calibration (probably, should use the same value as trainig)
 
 ### Quantization Calibration
-- If you want to use int8 mode, you need to calibration step
+- If you want to use int8 mode, you need calibration step
 1. Create ppm images whose size is the same as model input size from training images
 	- you can use `InferenceHelper/TensorRT/calibration/batchPrepare.py`
-	- python .\batchPrepare.py --inDir sample_org --outDir sample_ppm 
+	- `python .\batchPrepare.py --inDir sample_org --outDir sample_ppm `
 2. Copy the generated ppm files and list.txt to the target environment such as Jetson
-3. Modify parameters for calibration such as `CAL_DIR` 
-4. Define `USE_INT8`
-5. Compile the project and run it
-6. If it succeeds, trt model file is generated. You can use it after that
+3. Modify parameters for calibration such as `CAL_DIR` and define `USE_INT8`
+4. Compile the project and run it
+5. If it succeeds, trt model file is generated. You can use it after that
 
 ## Acknowledgements
 - Some code are retrieved from the following projects:
