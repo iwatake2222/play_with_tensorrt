@@ -13,6 +13,7 @@ set(SRC InferenceHelper.h InferenceHelper.cpp)
 
 if(INFERENCE_HELPER_ENABLE_TENSORRT)
 	set(SRC ${SRC} InferenceHelperTensorRt.h InferenceHelperTensorRt.cpp)
+	set(SRC ${SRC} TensorRT/logger.cpp TensorRT/BatchStream.h TensorRT/common.h TensorRT/EntropyCalibrator.h TensorRT/logger.h TensorRT/logging.h)
 endif()
 if(INFERENCE_HELPER_ENABLE_TFLITE)
 	set(SRC ${SRC} InferenceHelperTensorflowLite.h InferenceHelperTensorflowLite.cpp)
@@ -31,6 +32,7 @@ if(INFERENCE_HELPER_ENABLE_TENSORRT)
 	)
 	target_include_directories(${LibraryName} PUBLIC
 		${CUDA_INCLUDE_DIRS}
+		TensorRT
 	)
 	add_definitions(-DINFERENCE_HELPER_ENABLE_TENSORRT)
 endif()

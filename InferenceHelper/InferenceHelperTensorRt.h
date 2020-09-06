@@ -2,6 +2,7 @@
 #ifndef INFERENCE_HELPER_TENSORRT_
 #define INFERENCE_HELPER_TENSORRT_
 
+#include <memory>
 #include "InferenceHelper.h"
 
 namespace nvinfer1 {
@@ -9,7 +10,6 @@ namespace nvinfer1 {
 	class ICudaEngine;
 	class IExecutionContext;
 }
-class Logger;
 
 class InferenceHelperTensorRt : public InferenceHelper {
 public:
@@ -28,10 +28,9 @@ private:
 	void allocateBuffers();
 
 private:
-	Logger* m_logger;
-	nvinfer1::IRuntime* m_runtime;
-	nvinfer1::ICudaEngine* m_engine;
-	nvinfer1::IExecutionContext* m_context;
+	std::shared_ptr<nvinfer1::IRuntime> m_runtime;
+	std::shared_ptr<nvinfer1::ICudaEngine> m_engine;
+	std::shared_ptr<nvinfer1::IExecutionContext> m_context;
 	std::vector<std::pair<void*, int>> m_bufferListCPU;			// pointer and size (can be overwritten by user)
 	std::vector<std::pair<void*, int>> m_bufferListCPUReserved;	// pointer and size (fixed in initialization)
 	std::vector<void*> m_bufferListGPU;

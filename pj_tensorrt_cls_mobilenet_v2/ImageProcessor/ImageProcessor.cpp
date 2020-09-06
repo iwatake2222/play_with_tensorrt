@@ -31,6 +31,7 @@
 
 /* Model parameters */
 #define MODEL_NAME   "mobilenetv2-7.onnx"
+// #define MODEL_NAME   "mobilenetv2-7.trt"
 #define LABEL_NAME   "synset.txt"
 static const float PIXEL_MEAN[3] = { 0.0f, 0.0f, 0.0f };
 static const float PIXEL_STD[3] = { 1.0f,  1.0f, 1.0f };
@@ -140,7 +141,6 @@ int ImageProcessor_process(cv::Mat *mat, OUTPUT_PARAM *outputParam)
 	std::vector<float> outputScoreList;
 	outputScoreList.resize(s_outputTensor->dims[1]);
 	const float* valFloat = s_outputTensor->getDataAsFloat();
-	printf("valFloat = %p\n", valFloat);
 	for (int i = 0; i < (int)outputScoreList.size(); i++) {
 		outputScoreList[i] = valFloat[i];
 	}

@@ -12,7 +12,35 @@
 #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
+#include "TensorRT/common.h"
+
 #include "InferenceHelperTensorRt.h"
+
+/*** Settings ***/
+// #define USE_FP16
+#define USE_INT8
+
+#define OPT_MAX_WORK_SPACE_SIZE (1 << 30)
+#define OPT_AVG_TIMING_ITERATIONS 8
+#define OPT_MIN_TIMING_ITERATIONS 4
+
+#ifdef USE_INT8
+/* ★ Modify the following (use the same parameter as the model. Also, ppm must be the same size but not normalized.) */
+#define CAL_DIR        "/home/iwatake/play_with_tensorrt/InferenceHelper/TensorRT/calibration/sample_ppm"
+#define CAL_LIST_FILE  "list.txt"
+#define CAL_INPUT_NAME "data"
+#define CAL_BATCH_SIZE 10
+#define CAL_NB_BATCHES 2
+#define CAL_IMAGE_C    3
+#define CAL_IMAGE_H    224
+#define CAL_IMAGE_W    224
+#define CAL_SCALE      (1.0 / 255.0)
+#define CAL_BIAS       (0.0)
+
+/* include BatchStream.h after defining parameters */
+#include "TensorRT/BatchStream.h"
+#include "TensorRT/EntropyCalibrator.h"
+#endif
 
 /*** Macro ***/
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -24,31 +52,11 @@
 #endif
 #define PRINT(...) _PRINT("[InferenceHelperTensorRt] " __VA_ARGS__)
 
-#define CHECK(x)                              \
+#define LOCAL_CHECK(x)                              \
   if (!(x)) {                                                \
 	PRINT("Error at %s:%d\n", __FILE__, __LINE__); \
 	exit(1);                                                 \
   }
-
-
-/* very very simple Logger class */
-class Logger : public nvinfer1::ILogger
-{
-public:
-	Logger(Severity severity = Severity::kWARNING)
-		: reportableSeverity(severity)
-	{
-	}
-
-	void log(Severity severity, const char* msg) override
-	{
-		if (severity > reportableSeverity) return;
-		PRINT("[ERROR] %s\n", msg);
-	}
-
-	Severity reportableSeverity;
-};
-
 
 /*** Function ***/
 InferenceHelperTensorRt::InferenceHelperTensorRt()
@@ -63,8 +71,10 @@ int InferenceHelperTensorRt::initialize(const char *modelFilename, int numThread
 
 int InferenceHelperTensorRt::initialize(const char *modelFilename, int numThreads)
 {
-	bool isOnnxModel = false;
+	/* check model format type */
 	bool isTrtModel = false;
+	bool isOnnxModel = false;
+	bool isUffModel = false;
 	std::string trtModelFilename = std::string(modelFilename);
 	transform (trtModelFilename.begin(), trtModelFilename.end(), trtModelFilename.begin(), tolower);
 	if (trtModelFilename.find(".onnx") != std::string::npos) {
@@ -76,65 +86,70 @@ int InferenceHelperTensorRt::initialize(const char *modelFilename, int numThread
 		PRINT("[ERROR] unsupoprted file format: %s\n", modelFilename);
 	}
 
-	/* create m_runtime and m_engine from model file */
-	m_logger = new Logger;
-	m_runtime = nvinfer1::createInferRuntime(*m_logger);
-	m_engine = NULL;
-
-	if (isOnnxModel) {
-		/* create a TensorRT model from the onnx model */
-		nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(*m_logger);
-		nvinfer1::IBuilderConfig *builderConfig = builder->createBuilderConfig();
-#if 0
-		/* For older version of JetPack */
-		nvinfer1::INetworkDefinition* network = builder->createNetwork();
-#else
-		const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-		nvinfer1::INetworkDefinition* network = builder->createNetworkV2(explicitBatch);
-#endif
-		auto parser = nvonnxparser::createParser(*network, *m_logger);
-
-		if (!parser->parseFromFile(modelFilename, (int)nvinfer1::ILogger::Severity::kWARNING)) {
-			PRINT("[ERROR] failed to parse onnx file");
-			return -1;
-		}
-
-		builder->setMaxBatchSize(1);
-		builderConfig->setMaxWorkspaceSize(512 << 20);
-		builderConfig->setAvgTimingIterations(4);
-		builderConfig->setMinTimingIterations(4) ;
-		builderConfig->setFlag(nvinfer1::BuilderFlag::kFP16);
-
-		m_engine = builder->buildEngineWithConfig(*network, *builderConfig);
-
-		parser->destroy();
-		network->destroy();
-		builder->destroy();
-		builderConfig->destroy();
-
-	#if 1
-		/* save serialized model for next time */
-		nvinfer1::IHostMemory* trtModelStream = m_engine->serialize();
-		std::ofstream ofs(std::string(trtModelFilename), std::ios::out | std::ios::binary);
-		ofs.write((char*)(trtModelStream->data()), trtModelStream->size());
-		ofs.close();
-		trtModelStream->destroy();
-	#endif
-
-	} else if (isTrtModel) {
+	/* create runtime and engine from model file */
+	if (isTrtModel) {
 		std::string buffer;
 		std::ifstream stream(modelFilename, std::ios::binary);
 		if (stream) {
 			stream >> std::noskipws;
 			copy(std::istream_iterator<char>(stream), std::istream_iterator<char>(), back_inserter(buffer));
 		}
-		m_engine = m_runtime->deserializeCudaEngine(buffer.data(), buffer.size(), NULL);
+		m_runtime = std::shared_ptr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(sample::gLogger.getTRTLogger()), samplesCommon::InferDeleter());
+		m_engine = std::shared_ptr<nvinfer1::ICudaEngine>(m_runtime->deserializeCudaEngine(buffer.data(), buffer.size(), NULL), samplesCommon::InferDeleter());
 		stream.close();
-	}
+		LOCAL_CHECK(m_engine != NULL);
+		m_context = std::shared_ptr<nvinfer1::IExecutionContext>(m_engine->createExecutionContext(), samplesCommon::InferDeleter());
+		LOCAL_CHECK(m_context != NULL);
+	} else {
+		/* create a TensorRT model from another format */
+		auto builder = std::shared_ptr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(sample::gLogger.getTRTLogger()), samplesCommon::InferDeleter());
+#if 0
+		/* For older version of JetPack */
+		auto network = std::shared_ptr<nvinfer1::INetworkDefinition>(builder->createNetwork(), samplesCommon::InferDeleter());
+#else
+		const auto explicitBatch = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+		auto network = std::shared_ptr<nvinfer1::INetworkDefinition>(builder->createNetworkV2(explicitBatch), samplesCommon::InferDeleter());
+#endif
+		auto config = std::shared_ptr<nvinfer1::IBuilderConfig>(builder->createBuilderConfig(), samplesCommon::InferDeleter());
 
-	CHECK(m_engine != NULL);
-	m_context = m_engine->createExecutionContext();
-	CHECK(m_context != NULL);
+		auto parserOnnx = std::shared_ptr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, sample::gLogger.getTRTLogger()), samplesCommon::InferDeleter());
+		if (isOnnxModel) {
+			if (!parserOnnx->parseFromFile(modelFilename, (int)nvinfer1::ILogger::Severity::kWARNING)) {
+				PRINT("[ERROR] failed to parse onnx file");
+				return -1;
+			}
+		}
+
+		builder->setMaxBatchSize(1);
+		config->setMaxWorkspaceSize(OPT_MAX_WORK_SPACE_SIZE);
+		config->setAvgTimingIterations(OPT_AVG_TIMING_ITERATIONS);
+		config->setMinTimingIterations(OPT_MIN_TIMING_ITERATIONS) ;
+
+#if defined(USE_FP16)
+		config->setFlag(nvinfer1::BuilderFlag::kFP16);
+#elif defined(USE_INT8)
+		config->setFlag(nvinfer1::BuilderFlag::kINT8);
+		std::vector<std::string> dataDirs;
+		dataDirs.push_back(CAL_DIR);
+		nvinfer1::DimsNCHW imageDims{CAL_BATCH_SIZE, CAL_IMAGE_C, CAL_IMAGE_H, CAL_IMAGE_W};
+		BatchStream calibrationStream(CAL_BATCH_SIZE, CAL_NB_BATCHES, imageDims, CAL_LIST_FILE, dataDirs);
+		auto calibrator = std::unique_ptr<nvinfer1::IInt8Calibrator>(new Int8EntropyCalibrator2<BatchStream>(calibrationStream, 0, "my_model", CAL_INPUT_NAME));
+		config->setInt8Calibrator(calibrator.get());
+#endif 
+
+		m_engine = std::shared_ptr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config), samplesCommon::InferDeleter());
+		LOCAL_CHECK(m_engine != NULL);
+		m_context = std::shared_ptr<nvinfer1::IExecutionContext>(m_engine->createExecutionContext(), samplesCommon::InferDeleter());
+		LOCAL_CHECK(m_context != NULL);
+#if 1
+		/* save serialized model for next time */
+		nvinfer1::IHostMemory* trtModelStream = m_engine->serialize();
+		std::ofstream ofs(std::string(trtModelFilename), std::ios::out | std::ios::binary);
+		ofs.write((char*)(trtModelStream->data()), trtModelStream->size());
+		ofs.close();
+		trtModelStream->destroy();
+#endif
+	}
 
 	/* Allocate host/device buffers beforehand */
 	allocateBuffers();
@@ -157,7 +172,7 @@ int InferenceHelperTensorRt::finalize(void)
 			delete[] (int*)(m_bufferListCPUReserved[i].first);
 			break;
 		default:
-			CHECK(false);
+			LOCAL_CHECK(false);
 		}
 	}
 
@@ -165,11 +180,6 @@ int InferenceHelperTensorRt::finalize(void)
 		cudaFree(p);
 	}
 
-	m_context->destroy();
-	m_engine->destroy();
-	m_runtime->destroy();
-	delete m_logger;
-	
 	return 0;
 }
 
@@ -181,7 +191,6 @@ int InferenceHelperTensorRt::invoke(void)
 	for (int i = 0; i < (int)m_bufferListCPU.size(); i++) {
 		if (m_engine->bindingIsInput(i)) {
 			cudaMemcpyAsync(m_bufferListGPU[i], m_bufferListCPU[i].first, m_bufferListCPU[i].second, cudaMemcpyHostToDevice, stream);
-			printf("m_bufferListCPU[i].first = %p\n", m_bufferListCPU[i].first);
 		}
 	}
 	m_context->enqueue(1, &m_bufferListGPU[0], stream, NULL);
@@ -235,7 +244,7 @@ int InferenceHelperTensorRt::getTensorByIndex(const int index, TensorInfo *tenso
 		tensorInfo->type = TensorInfo::TENSOR_TYPE_INT32;
 		break;
 	default:
-		CHECK(false);
+		LOCAL_CHECK(false);
 	}
 	tensorInfo->data = m_bufferListCPU[index].first;
 	return 0;
@@ -256,7 +265,7 @@ int InferenceHelperTensorRt::setBufferToTensorByName(const char *name, void *dat
 int InferenceHelperTensorRt::setBufferToTensorByIndex(const int index, void *data, const int dataSize)
 {
 	PRINT("[WARNING] This method is not tested\n");
-	CHECK(m_bufferListCPU[index].second == dataSize);
+	LOCAL_CHECK(m_bufferListCPU[index].second == dataSize);
 	m_bufferListCPU[index].first = data;
 	return 0;
 }
@@ -286,22 +295,22 @@ void InferenceHelperTensorRt::allocateBuffers()
 		case nvinfer1::DataType::kHALF:
 		case nvinfer1::DataType::kINT32:
 			bufferCPU = new float[dataSize];
-			CHECK(bufferCPU);
+			LOCAL_CHECK(bufferCPU);
 			m_bufferListCPUReserved.push_back(std::pair<void*,int>(bufferCPU, dataSize * 4));
 			cudaMalloc(&bufferGPU, dataSize * 4);
-			CHECK(bufferGPU);
+			LOCAL_CHECK(bufferGPU);
 			m_bufferListGPU.push_back(bufferGPU);
 			break;
 		case nvinfer1::DataType::kINT8:
 			bufferCPU = new int[dataSize];
-			CHECK(bufferCPU);
+			LOCAL_CHECK(bufferCPU);
 			m_bufferListCPUReserved.push_back(std::pair<void*,int>(bufferCPU, dataSize * 1));
 			cudaMalloc(&bufferGPU, dataSize * 1);
-			CHECK(bufferGPU);
+			LOCAL_CHECK(bufferGPU);
 			m_bufferListGPU.push_back(bufferGPU);
 			break;
 		default:
-			CHECK(false);
+			LOCAL_CHECK(false);
 		}
 	}
 	m_bufferListCPU = m_bufferListCPUReserved;
