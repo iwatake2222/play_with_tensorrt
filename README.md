@@ -1,4 +1,4 @@
-# Play with Tensor RT
+# Play with TensorRT
 Sample projects to use TensorRT
 
 ## Target Environment
@@ -23,8 +23,7 @@ Sample projects to use TensorRT
 	- Download resource files (resource.zip) from https://github.com/iwatake2222/play_with_tensorrt/releases/ 
 	- Extract it to `resource`
 
-
-### Linux (PC Ubuntu, Raspberry Pi, Jetson Nano, etc.)
+### Linux
 ```sh
 cd pj_tensorrt_cls_mobilenet_v2   # for example
 mkdir build && cd build
@@ -41,7 +40,7 @@ cmake .. -DSPEED_TEST_ONLY=off
 ## Configuration for TensorRT
 ### Model format
 - The model file name is specified in `ImageProcessor.cpp`
-- `InferenceHelperTensorRt.cpp` automatically convert model according to the model format (extension).
+- `InferenceHelperTensorRt.cpp` automatically converts model according to the model format (extension).
 	- `.onnx` : convert the model from onnx to trt, and save the converted trt model
 	- `.uff` : convert the model from uff to trt, and save the converted trt model (WIP)
 	- `.trt` : use pre-converted trt model
