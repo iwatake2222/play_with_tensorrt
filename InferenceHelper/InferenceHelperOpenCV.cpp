@@ -99,7 +99,7 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 	m_inMatList.clear();
 	for (const auto& inputTensor : inputTensorInfoList) {
 		cv::Mat imgBlob;
-		if (inputTensor.dataType == InputTensorInfo::DATA_TYPE_IMAGE) {
+		if (inputTensor.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR || inputTensor.dataType == InputTensorInfo::DATA_TYPE_IMAGE_RGB) {
 			/* Generate mat from original data */
 			cv::Mat imgSrc = cv::Mat(cv::Size(inputTensor.imageInfo.width, inputTensor.imageInfo.height), (inputTensor.imageInfo.channel == 3) ? CV_8UC3 : CV_8UC1, inputTensor.data);
 
@@ -119,9 +119,11 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 
 			/* Convert color type */
 			if (inputTensor.imageInfo.channel == inputTensor.tensorDims.channel) {
-				/* do nothing */
+				if (inputTensor.imageInfo.channel == 3 && inputTensor.swapColor) {
+					cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
+				}
 			} else if (inputTensor.imageInfo.channel == 3 && inputTensor.tensorDims.channel == 1) {
-				cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2GRAY);
+				cv::cvtColor(imgSrc, imgSrc, (inputTensor.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
 			} else if (inputTensor.imageInfo.channel == 1 && inputTensor.tensorDims.channel == 3) {
 				cv::cvtColor(imgSrc, imgSrc, cv::COLOR_GRAY2BGR);
 			} else {
@@ -209,7 +211,7 @@ int32_t InferenceHelperOpenCV::invoke(std::vector<OutputTensorInfo>& outputTenso
 		PRINT_E("Unexpected output tensor num (%zu)\n", m_outMatList.size());
 		return RET_ERR;
 	}
-	for (int32_t i = 0; i < m_outMatList.size(); i++) {
+	for (int32_t i = 0; i < static_cast<int32_t>(m_outMatList.size()); i++) {
 		outputTensorInfoList[i].data = m_outMatList[i].data;
 		outputTensorInfoList[i].tensorDims.batch = 1;
 		outputTensorInfoList[i].tensorDims.width = m_outMatList[i].cols;

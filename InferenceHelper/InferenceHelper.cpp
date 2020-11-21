@@ -32,7 +32,7 @@
 
 InferenceHelper* InferenceHelper::create(const InferenceHelper::HELPER_TYPE type)
 {
-	InferenceHelper* p = NULL;
+	InferenceHelper* p = nullptr;
 	switch (type) {
 #ifdef INFERENCE_HELPER_ENABLE_OPENCV
 	case OPEN_CV:
@@ -72,11 +72,14 @@ InferenceHelper* InferenceHelper::create(const InferenceHelper::HELPER_TYPE type
 #endif
 #endif
 	default:
-		PRINT_E("not supported\n");
-		exit(1);
+		PRINT_E("Unsupported inference helper type (%d)\n", type);
 		break;
 	}
-	p->m_helperType = type;
+	if (p == nullptr) {
+		PRINT_E("Failed to create inference helper\n");
+	} else {
+		p->m_helperType = type;
+	}
 	return p;
 }
 
@@ -103,9 +106,11 @@ void InferenceHelper::preProcessByOpenCV(const InputTensorInfo& inputTensor, boo
 
 	/* Convert color type */
 	if (inputTensor.imageInfo.channel == inputTensor.tensorDims.channel) {
-		/* do nothing */
+		if (inputTensor.imageInfo.channel == 3 && inputTensor.swapColor) {
+			cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
+		}
 	} else if (inputTensor.imageInfo.channel == 3 && inputTensor.tensorDims.channel == 1) {
-		cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2GRAY);
+		cv::cvtColor(imgSrc, imgSrc, (inputTensor.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
 	} else if (inputTensor.imageInfo.channel == 1 && inputTensor.tensorDims.channel == 3) {
 		cv::cvtColor(imgSrc, imgSrc, cv::COLOR_GRAY2BGR);
 	}

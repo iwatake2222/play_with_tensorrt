@@ -1,4 +1,3 @@
-
 #ifndef INFERENCE_HELPER_
 #define INFERENCE_HELPER_
 
@@ -46,7 +45,8 @@ public:
 class InputTensorInfo : public TensorInfo {
 public:
 	enum {
-		DATA_TYPE_IMAGE,
+		DATA_TYPE_IMAGE_BGR,
+		DATA_TYPE_IMAGE_RGB,
 		DATA_TYPE_BLOB_NHWC,
 		DATA_TYPE_BLOB_NCHW,
 	};
@@ -54,7 +54,8 @@ public:
 public:
 	InputTensorInfo() {
 		data = nullptr;
-		dataType = DATA_TYPE_IMAGE;
+		dataType = DATA_TYPE_IMAGE_BGR;
+		swapColor = false;
 		imageInfo.width = 1;
 		imageInfo.height = 1;
 		imageInfo.channel = 1;
@@ -72,6 +73,7 @@ public:
 public:
 	void* data;
 	int32_t dataType;
+	bool swapColor;
 
 	struct {
 		int32_t width;
@@ -103,7 +105,7 @@ public:
 			delete[] m_dataFp32;
 		}
 	}
-	float_t* getDataAsFloat() {
+	const float_t* getDataAsFloat() {
 		if (tensorType == TENSOR_TYPE_UINT8) {
 			int32_t dataNum = 1;
 			dataNum = tensorDims.batch * tensorDims.channel * tensorDims.height * tensorDims.width;
