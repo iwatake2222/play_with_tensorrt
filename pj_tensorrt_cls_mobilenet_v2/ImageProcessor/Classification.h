@@ -37,7 +37,7 @@ public:
 	~Classification() {}
 	int32_t initialize(const std::string& workDir, const int32_t numThreads);
 	int32_t finalize(void);
-	int32_t invoke(cv::Mat& originalMat, RESULT& result);
+	int32_t invoke(const cv::Mat& originalMat, RESULT& result);
 
 private:
 	int32_t readLabel(const std::string& filename, std::vector<std::string>& labelList);

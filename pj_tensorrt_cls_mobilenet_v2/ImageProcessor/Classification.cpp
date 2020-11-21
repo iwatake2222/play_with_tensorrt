@@ -30,7 +30,6 @@
 #define LABEL_NAME   "synset.txt"
 
 
-
 /*** Function ***/
 int32_t Classification::initialize(const std::string& workDir, const int32_t numThreads)
 {
@@ -82,7 +81,8 @@ int32_t Classification::initialize(const std::string& workDir, const int32_t num
 	m_outputTensorList.push_back(outputTensorInfo);
 
 	/* Create and Initialize Inference Helper */
-	m_inferenceHelper.reset(InferenceHelper::create(InferenceHelper::OPEN_CV));
+	// m_inferenceHelper.reset(InferenceHelper::create(InferenceHelper::OPEN_CV));
+	m_inferenceHelper.reset(InferenceHelper::create(InferenceHelper::TENSOR_RT));
 
 	if (!m_inferenceHelper) {
 		return RET_ERR;
@@ -110,21 +110,27 @@ int32_t Classification::finalize()
 }
 
 
-int32_t Classification::invoke(cv::Mat& originalMat, RESULT& result)
+int32_t Classification::invoke(const cv::Mat& originalMat, RESULT& result)
 {
 	/*** PreProcess ***/
-	InputTensorInfo& inputTensorInfo = m_inputTensorList[0];
 	const auto& tPreProcess0 = std::chrono::steady_clock::now();
-	inputTensorInfo.data = originalMat.data;
+	InputTensorInfo& inputTensorInfo = m_inputTensorList[0];
+	/* do resize and color conversion here because some inference engine doesn't support these operations */
+	cv::Mat imgSrc;
+	cv::resize(originalMat, imgSrc, cv::Size(inputTensorInfo.tensorDims.width, inputTensorInfo.tensorDims.height));
+	if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.swapColor) {
+		cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
+	}
+	inputTensorInfo.data = imgSrc.data;
 	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE_BGR;
 	inputTensorInfo.swapColor = false;
-	inputTensorInfo.imageInfo.width = originalMat.cols;
-	inputTensorInfo.imageInfo.height = originalMat.rows;
-	inputTensorInfo.imageInfo.channel = originalMat.channels();
+	inputTensorInfo.imageInfo.width = imgSrc.cols;
+	inputTensorInfo.imageInfo.height = imgSrc.rows;
+	inputTensorInfo.imageInfo.channel = imgSrc.channels();
 	inputTensorInfo.imageInfo.cropX = 0;
 	inputTensorInfo.imageInfo.cropY = 0;
-	inputTensorInfo.imageInfo.cropWidth = originalMat.cols;
-	inputTensorInfo.imageInfo.cropHeight = originalMat.rows;
+	inputTensorInfo.imageInfo.cropWidth = imgSrc.cols;
+	inputTensorInfo.imageInfo.cropHeight = imgSrc.rows;
 	if (m_inferenceHelper->preProcess(m_inputTensorList) != InferenceHelper::RET_OK) {
 		return RET_ERR;
 	}

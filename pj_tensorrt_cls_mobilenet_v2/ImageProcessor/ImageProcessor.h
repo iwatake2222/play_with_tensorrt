@@ -1,4 +1,3 @@
-
 #ifndef IMAGE_PROCESSOR_H_
 #define IMAGE_PROCESSOR_H_
 

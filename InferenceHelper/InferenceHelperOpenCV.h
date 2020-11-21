@@ -1,4 +1,3 @@
-
 #ifndef INFERENCE_HELPER_OPENCV_
 #define INFERENCE_HELPER_OPENCV_
 
@@ -21,6 +20,7 @@ public:
 	InferenceHelperOpenCV();
 	~InferenceHelperOpenCV() override;
 	int32_t setNumThread(const int32_t numThread) override;
+	int32_t setCustomOps(const std::vector<std::pair<const char*, const void*>>& customOps) override;
 	int32_t initialize(const std::string& modelFilename, std::vector<InputTensorInfo>& inputTensorInfoList, std::vector<OutputTensorInfo>& outputTensorInfoList) override;
 	int32_t finalize(void) override;
 	int32_t preProcess(const std::vector<InputTensorInfo>& inputTensorInfoList) override;

@@ -90,7 +90,7 @@ int32_t ImageProcessor_process(cv::Mat* mat, OUTPUT_PARAM* outputParam)
 		return -1;
 	}
 
-	cv::Mat originalMat = *mat;
+	const cv::Mat originalMat = *mat;
 	Classification::RESULT result = { 0 };
 	if (s_classification->invoke(originalMat, result) != Classification::RET_OK) {
 		return -1;

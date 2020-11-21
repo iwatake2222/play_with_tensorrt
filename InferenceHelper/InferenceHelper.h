@@ -47,7 +47,7 @@ public:
 	enum {
 		DATA_TYPE_IMAGE_BGR,
 		DATA_TYPE_IMAGE_RGB,
-		DATA_TYPE_BLOB_NHWC,
+		DATA_TYPE_BLOB_NHWC,	// data which already finished preprocess(color conversion, resize, normalize, etc.)
 		DATA_TYPE_BLOB_NCHW,
 	};
 
@@ -163,11 +163,12 @@ public:
 
 public:
 	static InferenceHelper* create(const HELPER_TYPE typeFw);
-	static void preProcessByOpenCV(const InputTensorInfo& inputTensor, bool isNCHW, cv::Mat& imgBlob);	// use this if the selected inference engine doesn't support pre-process
+	static void preProcessByOpenCV(const InputTensorInfo& inputTensorInfo, bool isNCHW, cv::Mat& imgBlob);	// use this if the selected inference engine doesn't support pre-process
 
 public:
 	virtual ~InferenceHelper() {}
 	virtual int32_t setNumThread(const int32_t numThread) = 0;
+	virtual int32_t setCustomOps(const std::vector<std::pair<const char*, const void*>>& customOps) = 0;
 	virtual int32_t initialize(const std::string& modelFilename, std::vector<InputTensorInfo>& inputTensorInfoList, std::vector<OutputTensorInfo>& outputTensorInfoList) = 0;
 	virtual int32_t finalize(void) = 0;
 	virtual int32_t preProcess(const std::vector<InputTensorInfo>& inputTensorInfoList) = 0;

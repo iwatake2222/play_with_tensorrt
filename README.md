@@ -39,7 +39,7 @@ cmake .. -DSPEED_TEST_ONLY=off
 
 ## Configuration for TensorRT
 ### Model format
-- The model file name is specified in `ImageProcessor.cpp`
+- The model file name is specified in a class calling `InferenceHelperTensorRt.cpp` . Please find `MODEL_NAME` definition.
 - `InferenceHelperTensorRt.cpp` automatically converts model according to the model format (extension).
 	- `.onnx` : convert the model from onnx to trt, and save the converted trt model
 	- `.uff` : convert the model from uff to trt, and save the converted trt model (WIP)
@@ -87,9 +87,10 @@ cmake .. -DSPEED_TEST_ONLY=off
 	- you can use `InferenceHelper/TensorRT/calibration/batchPrepare.py`
 	- `python .\batchPrepare.py --inDir sample_org --outDir sample_ppm `
 2. Copy the generated ppm files and list.txt to the target environment such as Jetson
-3. Modify parameters for calibration such as `CAL_DIR` and define `USE_INT8`
-4. Compile the project and run it
-5. If it succeeds, trt model file is generated. You can use it after that
+3. Use `.onnx` model
+4. Modify parameters for calibration such as `CAL_DIR` and define `USE_INT8`
+5. Compile the project and run it
+6. If it succeeds, trt model file is generated. You can use it after that
 
 ## Acknowledgements
 - Some code are retrieved from the following projects:
