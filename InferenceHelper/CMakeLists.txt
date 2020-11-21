@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 set(LibraryName "InferenceHelper")
 
+set(INFERENCE_HELPER_ENABLE_OPENCV on CACHE BOOL "With OpenCV? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TENSORRT on CACHE BOOL "With TensorRT? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TFLITE off CACHE BOOL "With Tflite? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_EDGETPU off CACHE BOOL "With Tflite Delegate EdgeTPU? [on/off]")
@@ -11,6 +12,9 @@ set(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_XNNPACK off CACHE BOOL "With Tflite 
 # Create library
 set(SRC InferenceHelper.h InferenceHelper.cpp)
 
+if(INFERENCE_HELPER_ENABLE_OPENCV)
+	set(SRC ${SRC} InferenceHelperOpenCV.h InferenceHelperOpenCV.cpp)
+endif()
 if(INFERENCE_HELPER_ENABLE_TENSORRT)
 	set(SRC ${SRC} InferenceHelperTensorRt.h InferenceHelperTensorRt.cpp)
 	set(SRC ${SRC} TensorRT/logger.cpp TensorRT/BatchStream.h TensorRT/common.h TensorRT/EntropyCalibrator.h TensorRT/logger.h TensorRT/logging.h)
@@ -20,21 +24,42 @@ if(INFERENCE_HELPER_ENABLE_TFLITE)
 endif()
 add_library(${LibraryName} ${SRC})
 
+# For TensorInfo (Pre process calculation)
+find_package(OpenCV REQUIRED)
+target_include_directories(${LibraryName} PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${LibraryName} ${OpenCV_LIBS})
+target_include_directories(${LibraryName} PUBLIC ../CommonHelper)
+target_link_libraries(${LibraryName} CommonHelper)
+
+
+# For OpenCV
+if(INFERENCE_HELPER_ENABLE_OPENCV)
+	find_package(OpenCV REQUIRED)
+	target_include_directories(${LibraryName} PUBLIC ${OpenCV_INCLUDE_DIRS})
+	target_link_libraries(${LibraryName} ${OpenCV_LIBS})
+	add_definitions(-DINFERENCE_HELPER_ENABLE_OPENCV)
+endif()
+
 # For TensorRT
 if(INFERENCE_HELPER_ENABLE_TENSORRT)
-	find_package(CUDA REQUIRED)
-	target_link_libraries(${LibraryName}
-		${CUDA_LIBRARIES}
-		nvinfer
-		nvonnxparser
-		nvinfer_plugin
-		cudnn
-	)
-	target_include_directories(${LibraryName} PUBLIC
-		${CUDA_INCLUDE_DIRS}
-		TensorRT
-	)
-	add_definitions(-DINFERENCE_HELPER_ENABLE_TENSORRT)
+	find_package(CUDA)
+	if(CUDA_FOUND)
+		target_link_libraries(${LibraryName}
+			${CUDA_LIBRARIES}
+			nvinfer
+			nvonnxparser
+			nvinfer_plugin
+			cudnn
+		)
+		target_include_directories(${LibraryName} PUBLIC
+			${CUDA_INCLUDE_DIRS}
+			TensorRT
+		)
+		add_definitions(-DINFERENCE_HELPER_ENABLE_TENSORRT)
+		message("CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
+	else()
+		message(WARNING, "Cannot find CUDA")
+	endif()
 endif()
 
 # For Tensorflow Lite
