@@ -21,8 +21,8 @@
 
 /*** Macro ***/
 #define TAG "ImageProcessor"
-#define PRINT   COMMON_HELPER_PRINT
-#define PRINT_E COMMON_HELPER_PRINT_E
+#define PRINT(...)   COMMON_HELPER_PRINT(TAG, __VA_ARGS__)
+#define PRINT_E(...) COMMON_HELPER_PRINT_E(TAG, __VA_ARGS__)
 
 #define CHECK(x)                              \
   if (!(x)) {                                                \
@@ -39,8 +39,8 @@
 /*** Global variable ***/
 static std::vector<std::string> s_labels;
 static InferenceHelper *s_inferenceHelper;
-static std::vector<TensorInfo> s_inputTensorList;
-static std::vector<TensorInfo> s_outputTensorList;
+static std::vector<InputTensorInfo> s_inputTensorList;
+static std::vector<OutputTensorInfo> s_outputTensorList;
 
 /*** Function ***/
 static cv::Scalar createCvColor(int32_t b, int32_t g, int32_t r) {
@@ -55,7 +55,7 @@ static void readLabel(const char* filename, std::vector<std::string> & labels)
 {
 	std::ifstream ifs(filename);
 	if (ifs.fail()) {
-		PRINT(TAG, "failed to read %s\n", filename);
+		PRINT("failed to read %s\n", filename);
 		return;
 	}
 	std::string str;
@@ -67,20 +67,29 @@ static void readLabel(const char* filename, std::vector<std::string> & labels)
 
 int32_t ImageProcessor_initialize(const INPUT_PARAM *inputParam)
 {
-	s_inferenceHelper = InferenceHelper::create(InferenceHelper::TENSOR_RT);
+	s_inferenceHelper = InferenceHelper::create(InferenceHelper::OPEN_CV);
 
 	std::string modelFilename = std::string(inputParam->workDir) + "/model/" + MODEL_NAME;
 	std::string labelFilename = std::string(inputParam->workDir) + "/model/" + LABEL_NAME;
 	
-	TensorInfo inputTensorInfo;
-	TensorInfo outputTensorInfo;
+	InputTensorInfo inputTensorInfo;
+	OutputTensorInfo outputTensorInfo;
 
 	inputTensorInfo.name = "data";
-	inputTensorInfo.type = TensorInfo::TENSOR_TYPE_FP32;
-	inputTensorInfo.dims.batch = 1;
-	inputTensorInfo.dims.width = 224;
-	inputTensorInfo.dims.height = 224;
-	inputTensorInfo.dims.channel = 3;
+	inputTensorInfo.tensorType = TensorInfo::TENSOR_TYPE_FP32;
+	inputTensorInfo.tensorDims.batch = 1;
+	inputTensorInfo.tensorDims.width = 224;
+	inputTensorInfo.tensorDims.height = 224;
+	inputTensorInfo.tensorDims.channel = 3;
+	inputTensorInfo.data = nullptr;
+	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE;
+	inputTensorInfo.imageInfo.width = -1;
+	inputTensorInfo.imageInfo.height = -1;
+	inputTensorInfo.imageInfo.channel = -1;
+	inputTensorInfo.imageInfo.cropX = -1;
+	inputTensorInfo.imageInfo.cropY = -1;
+	inputTensorInfo.imageInfo.cropWidth = -1;
+	inputTensorInfo.imageInfo.cropHeight = -1;
 	inputTensorInfo.normalize.mean[0] = 0.485f;   	/* https://github.com/onnx/models/tree/master/vision/classification/mobilenet#preprocessing */
 	inputTensorInfo.normalize.mean[1] = 0.456f;
 	inputTensorInfo.normalize.mean[2] = 0.406f;
@@ -99,7 +108,7 @@ int32_t ImageProcessor_initialize(const INPUT_PARAM *inputParam)
 	s_inputTensorList.push_back(inputTensorInfo);
 
 	outputTensorInfo.name = "mobilenetv20_output_flatten0_reshape0";
-	outputTensorInfo.type = TensorInfo::TENSOR_TYPE_FP32;
+	outputTensorInfo.tensorType = TensorInfo::TENSOR_TYPE_FP32;
 	s_outputTensorList.push_back(outputTensorInfo);
 
 	s_inferenceHelper->setNumThread(4);
@@ -116,7 +125,7 @@ int32_t ImageProcessor_command(int32_t cmd)
 	switch (cmd) {
 	case 0:
 	default:
-		PRINT(TAG, "command(%d) is not supported\n", cmd);
+		PRINT("command(%d) is not supported\n", cmd);
 		return -1;
 	}
 }
@@ -124,23 +133,31 @@ int32_t ImageProcessor_command(int32_t cmd)
 
 int32_t ImageProcessor_process(cv::Mat *mat, OUTPUT_PARAM *outputParam)
 {
-	TensorInfo& inputTensor = s_inputTensorList[0];
-
 	/*** PreProcess ***/
+	InputTensorInfo& inputTensorInfo = s_inputTensorList[0];
 	const auto& tPreProcess0 = std::chrono::steady_clock::now();
-	inputTensor.preProcess(mat->data, mat->cols, mat->rows);
+	inputTensorInfo.data = mat->data;
+	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE;
+	inputTensorInfo.imageInfo.width = mat->cols;
+	inputTensorInfo.imageInfo.height = mat->rows;
+	inputTensorInfo.imageInfo.channel = mat->channels();
+	inputTensorInfo.imageInfo.cropX = 0;
+	inputTensorInfo.imageInfo.cropY = 0;
+	inputTensorInfo.imageInfo.cropWidth = mat->cols;
+	inputTensorInfo.imageInfo.cropHeight = mat->rows;
+	s_inferenceHelper->preProcess(s_inputTensorList);
 	const auto& tPreProcess1 = std::chrono::steady_clock::now();
 
 	/*** Inference ***/
 	const auto& tInference0 = std::chrono::steady_clock::now();
-	s_inferenceHelper->invoke(s_inputTensorList, s_outputTensorList);
+	s_inferenceHelper->invoke(s_outputTensorList);
 	const auto& tInference1 = std::chrono::steady_clock::now();
 
 	/*** PostProcess ***/
 	const auto& tPostProcess0 = std::chrono::steady_clock::now();
 	/* Retrieve the result */
 	std::vector<float_t> outputScoreList;
-	outputScoreList.resize(s_outputTensorList[0].dims.width * s_outputTensorList[0].dims.height * s_outputTensorList[0].dims.channel);
+	outputScoreList.resize(s_outputTensorList[0].tensorDims.width * s_outputTensorList[0].tensorDims.height * s_outputTensorList[0].tensorDims.channel);
 	const float_t* valFloat = s_outputTensorList[0].getDataAsFloat();
 	for (int32_t i = 0; i < (int32_t)outputScoreList.size(); i++) {
 		outputScoreList[i] = valFloat[i];
@@ -149,7 +166,7 @@ int32_t ImageProcessor_process(cv::Mat *mat, OUTPUT_PARAM *outputParam)
 	/* Find the max score */
 	int32_t maxIndex = (int32_t)(std::max_element(outputScoreList.begin(), outputScoreList.end()) - outputScoreList.begin());
 	auto maxScore = *std::max_element(outputScoreList.begin(), outputScoreList.end());
-	PRINT(TAG, "Result = %s (%d) (%.3f)\n", s_labels[maxIndex].c_str(), maxIndex, maxScore);
+	PRINT("Result = %s (%d) (%.3f)\n", s_labels[maxIndex].c_str(), maxIndex, maxScore);
 	const auto& tPostProcess1 = std::chrono::steady_clock::now();
 
 	/* Draw the result */
