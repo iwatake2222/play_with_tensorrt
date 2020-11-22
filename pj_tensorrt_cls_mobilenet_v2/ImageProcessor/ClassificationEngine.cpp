@@ -17,10 +17,10 @@
 /* for My modules */
 #include "CommonHelper.h"
 #include "InferenceHelper.h"
-#include "Classification.h"
+#include "ClassificationEngine.h"
 
 /*** Macro ***/
-#define TAG "Classification"
+#define TAG "ClassificationEngine"
 #define PRINT(...)   COMMON_HELPER_PRINT(TAG, __VA_ARGS__)
 #define PRINT_E(...) COMMON_HELPER_PRINT_E(TAG, __VA_ARGS__)
 
@@ -31,7 +31,7 @@
 
 
 /*** Function ***/
-int32_t Classification::initialize(const std::string& workDir, const int32_t numThreads)
+int32_t ClassificationEngine::initialize(const std::string& workDir, const int32_t numThreads)
 {
 	/* Set model information */
 	std::string modelFilename = workDir + "/model/" + MODEL_NAME;
@@ -88,9 +88,11 @@ int32_t Classification::initialize(const std::string& workDir, const int32_t num
 		return RET_ERR;
 	}
 	if (m_inferenceHelper->setNumThread(4) != InferenceHelper::RET_OK) {
+		m_inferenceHelper.reset();
 		return RET_ERR;
 	}
 	if (m_inferenceHelper->initialize(modelFilename, m_inputTensorList, m_outputTensorList) != InferenceHelper::RET_OK) {
+		m_inferenceHelper.reset();
 		return RET_ERR;
 	}
 
@@ -103,15 +105,23 @@ int32_t Classification::initialize(const std::string& workDir, const int32_t num
 	return RET_OK;
 }
 
-int32_t Classification::finalize()
+int32_t ClassificationEngine::finalize()
 {
+	if (!m_inferenceHelper) {
+		PRINT_E("Inference helper is not created\n");
+		return RET_ERR;
+	}
 	m_inferenceHelper->finalize();
 	return RET_OK;
 }
 
 
-int32_t Classification::invoke(const cv::Mat& originalMat, RESULT& result)
+int32_t ClassificationEngine::invoke(const cv::Mat& originalMat, RESULT& result)
 {
+	if (!m_inferenceHelper) {
+		PRINT_E("Inference helper is not created\n");
+		return RET_ERR;
+	}
 	/*** PreProcess ***/
 	const auto& tPreProcess0 = std::chrono::steady_clock::now();
 	InputTensorInfo& inputTensorInfo = m_inputTensorList[0];
@@ -171,11 +181,11 @@ int32_t Classification::invoke(const cv::Mat& originalMat, RESULT& result)
 }
 
 
-int32_t Classification::readLabel(const std::string& filename, std::vector<std::string>& labelList)
+int32_t ClassificationEngine::readLabel(const std::string& filename, std::vector<std::string>& labelList)
 {
 	std::ifstream ifs(filename);
 	if (ifs.fail()) {
-		PRINT("failed to read %s\n", filename.c_str());
+		PRINT_E("Failed to read %s\n", filename.c_str());
 		return RET_ERR;
 	}
 	labelList.clear();

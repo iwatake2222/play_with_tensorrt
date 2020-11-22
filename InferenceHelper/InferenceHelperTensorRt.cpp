@@ -208,7 +208,7 @@ int InferenceHelperTensorRt::finalize(void)
 			delete[] (int*)(m_bufferListCPUReserved[i].first);
 			break;
 		default:
-			return -1;
+			return RET_ERR;
 		}
 	}
 
@@ -216,7 +216,7 @@ int InferenceHelperTensorRt::finalize(void)
 		cudaFree(p);
 	}
 
-	return 0;
+	return RET_OK;
 }
 
 int32_t InferenceHelperTensorRt::preProcess(const std::vector<InputTensorInfo>& inputTensorInfoList)

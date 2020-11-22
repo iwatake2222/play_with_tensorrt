@@ -1,5 +1,5 @@
-#ifndef CLASSIFICATION_
-#define CLASSIFICATION_
+#ifndef CLASSIFICATION_ENGINE_
+#define CLASSIFICATION_ENGINE_
 
 /* for general */
 #include <cstdint>
@@ -16,7 +16,7 @@
 #include "InferenceHelper.h"
 
 
-class Classification {
+class ClassificationEngine {
 public:
 	enum {
 		RET_OK = 0,
@@ -33,8 +33,8 @@ public:
 	} RESULT;
 
 public:
-	Classification() {}
-	~Classification() {}
+	ClassificationEngine() {}
+	~ClassificationEngine() {}
 	int32_t initialize(const std::string& workDir, const int32_t numThreads);
 	int32_t finalize(void);
 	int32_t invoke(const cv::Mat& originalMat, RESULT& result);
