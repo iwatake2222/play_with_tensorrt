@@ -105,7 +105,7 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 	m_inMatList.clear();
 	for (const auto& inputTensorInfo : inputTensorInfoList) {
 		cv::Mat imgBlob;
-		if (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR || inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_RGB) {
+		if (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE) {
 			/* Generate mat from original data */
 			cv::Mat imgSrc = cv::Mat(cv::Size(inputTensorInfo.imageInfo.width, inputTensorInfo.imageInfo.height), (inputTensorInfo.imageInfo.channel == 3) ? CV_8UC3 : CV_8UC1, inputTensorInfo.data);
 
@@ -125,11 +125,11 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 
 			/* Convert color type */
 			if (inputTensorInfo.imageInfo.channel == inputTensorInfo.tensorDims.channel) {
-				if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.swapColor) {
+				if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.imageInfo.swapColor) {
 					cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
 				}
 			} else if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.tensorDims.channel == 1) {
-				cv::cvtColor(imgSrc, imgSrc, (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
+				cv::cvtColor(imgSrc, imgSrc, (inputTensorInfo.imageInfo.isBGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
 			} else if (inputTensorInfo.imageInfo.channel == 1 && inputTensorInfo.tensorDims.channel == 3) {
 				cv::cvtColor(imgSrc, imgSrc, cv::COLOR_GRAY2BGR);
 			} else {
@@ -142,8 +142,9 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 				if (inputTensorInfo.tensorDims.channel == 3) {
 #if 1
 					imgSrc.convertTo(imgSrc, CV_32FC3);
-					cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.norm)), imgSrc);
 					cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.mean)), imgSrc);
+					cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.norm)), imgSrc);
+					
 #else
 					imgSrc.convertTo(imgSrc, CV_32FC3, 1.0 / 255);
 					cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.mean)), imgSrc);
@@ -152,8 +153,8 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 				} else if (inputTensorInfo.tensorDims.channel == 1) {
 #if 1
 					imgSrc.convertTo(imgSrc, CV_32FC1);
-					cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.norm)), imgSrc);
 					cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.mean)), imgSrc);
+					cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.norm)), imgSrc);
 #else
 					imgSrc.convertTo(imgSrc, CV_32FC1, 1.0 / 255);
 					cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.mean)), imgSrc);
@@ -176,9 +177,9 @@ int32_t InferenceHelperOpenCV::preProcess(const std::vector<InputTensorInfo>& in
 		} else if (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_BLOB_NHWC) {
 			cv::Mat imgSrc;
 			if (inputTensorInfo.tensorType == TensorInfo::TENSOR_TYPE_FP32) {
-				imgSrc = cv::Mat(cv::Size(inputTensorInfo.imageInfo.width, inputTensorInfo.imageInfo.height), (inputTensorInfo.imageInfo.channel == 3) ? CV_32FC3 : CV_32FC1, inputTensorInfo.data);
+				imgSrc = cv::Mat(cv::Size(inputTensorInfo.tensorDims.width, inputTensorInfo.tensorDims.height), (inputTensorInfo.tensorDims.channel == 3) ? CV_32FC3 : CV_32FC1, inputTensorInfo.data);
 			} else if (inputTensorInfo.tensorType == TensorInfo::TENSOR_TYPE_UINT8) {
-				imgSrc = cv::Mat(cv::Size(inputTensorInfo.imageInfo.width, inputTensorInfo.imageInfo.height), (inputTensorInfo.imageInfo.channel == 3) ? CV_8UC3 : CV_8UC1, inputTensorInfo.data);
+				imgSrc = cv::Mat(cv::Size(inputTensorInfo.tensorDims.width, inputTensorInfo.tensorDims.height), (inputTensorInfo.tensorDims.channel == 3) ? CV_8UC3 : CV_8UC1, inputTensorInfo.data);
 			} else {
 				PRINT_E("Unsupported tensorType (%d)\n", inputTensorInfo.tensorType);
 				return RET_ERR;

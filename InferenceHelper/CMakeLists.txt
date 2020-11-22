@@ -8,6 +8,7 @@ set(INFERENCE_HELPER_ENABLE_TFLITE off CACHE BOOL "With Tflite? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_EDGETPU off CACHE BOOL "With Tflite Delegate EdgeTPU? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_GPU off CACHE BOOL "With Tflite Delegate GPU? [on/off]")
 set(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_XNNPACK off CACHE BOOL "With Tflite Delegate XNNPACK? [on/off]")
+set(INFERENCE_HELPER_ENABLE_NCNN off CACHE BOOL "With Ncnn? [on/off]")
 
 # Create library
 set(SRC InferenceHelper.h InferenceHelper.cpp)
@@ -21,6 +22,9 @@ if(INFERENCE_HELPER_ENABLE_TENSORRT)
 endif()
 if(INFERENCE_HELPER_ENABLE_TFLITE)
 	set(SRC ${SRC} InferenceHelperTensorflowLite.h InferenceHelperTensorflowLite.cpp)
+endif()
+if(INFERENCE_HELPER_ENABLE_NCNN)
+	set(SRC ${SRC} InferenceHelperNcnn.h InferenceHelperNcnn.cpp)
 endif()
 add_library(${LibraryName} ${SRC})
 
@@ -94,4 +98,13 @@ endif()
 # For Tensorflow Lite Delegate(XNNPACK)
 if(INFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_XNNPACK)
 	add_definitions(-DINFERENCE_HELPER_ENABLE_TFLITE_DELEGATE_XNNPACK)
+endif()
+
+
+# For NCNN
+if(INFERENCE_HELPER_ENABLE_NCNN)
+	include(${CMAKE_CURRENT_LIST_DIR}/../third_party/cmakes/ncnn.cmake)
+	target_include_directories(${LibraryName} PUBLIC ${NCNN_INC})
+	target_link_libraries(${LibraryName} ${NCNN_LIB})
+	add_definitions(-DINFERENCE_HELPER_ENABLE_NCNN)
 endif()

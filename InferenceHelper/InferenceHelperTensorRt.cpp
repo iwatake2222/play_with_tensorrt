@@ -222,7 +222,7 @@ int InferenceHelperTensorRt::finalize(void)
 int32_t InferenceHelperTensorRt::preProcess(const std::vector<InputTensorInfo>& inputTensorInfoList)
 {
 	for (const auto& inputTensorInfo : inputTensorInfoList) {
-		if (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR || inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_RGB) {
+		if (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE) {
 			if ((inputTensorInfo.imageInfo.width != inputTensorInfo.imageInfo.cropWidth) || (inputTensorInfo.imageInfo.height != inputTensorInfo.imageInfo.cropHeight)) {
 				PRINT_E("Crop is not supported\n");
 				return  RET_ERR;
@@ -250,8 +250,7 @@ int32_t InferenceHelperTensorRt::preProcess(const std::vector<InputTensorInfo>& 
 					for (int32_t i = 0; i < inputTensorInfo.tensorDims.width * inputTensorInfo.tensorDims.height; i++) {
 #if 1
 						dst[c * inputTensorInfo.tensorDims.width * inputTensorInfo.tensorDims.height + i] = 
-							src[i * inputTensorInfo.tensorDims.channel + c] * inputTensorInfo.normalize.norm[c]
-							- inputTensorInfo.normalize.mean[c];
+							(src[i * inputTensorInfo.tensorDims.channel + c] - inputTensorInfo.normalize.mean[c]) * inputTensorInfo.normalize.norm[c];
 #else
 						dst[c * inputTensorInfo.tensorDims.width * inputTensorInfo.tensorDims.height + i] = 
 							(src[i * inputTensorInfo.tensorDims.channel + c] / 255.0f - inputTensorInfo.normalize.mean[c]) / inputTensorInfo.normalize.norm[c];

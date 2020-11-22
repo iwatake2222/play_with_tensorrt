@@ -47,8 +47,7 @@ int32_t ClassificationEngine::initialize(const std::string& workDir, const int32
 	inputTensorInfo.tensorDims.height = 224;
 	inputTensorInfo.tensorDims.channel = 3;
 	inputTensorInfo.data = nullptr;
-	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE_BGR;
-	inputTensorInfo.swapColor = false;
+	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE;
 	inputTensorInfo.imageInfo.width = -1;
 	inputTensorInfo.imageInfo.height = -1;
 	inputTensorInfo.imageInfo.channel = -1;
@@ -56,16 +55,26 @@ int32_t ClassificationEngine::initialize(const std::string& workDir, const int32
 	inputTensorInfo.imageInfo.cropY = -1;
 	inputTensorInfo.imageInfo.cropWidth = -1;
 	inputTensorInfo.imageInfo.cropHeight = -1;
+	inputTensorInfo.imageInfo.isBGR = true;
+	inputTensorInfo.imageInfo.swapColor = false;
 	inputTensorInfo.normalize.mean[0] = 0.485f;   	/* https://github.com/onnx/models/tree/master/vision/classification/mobilenet#preprocessing */
 	inputTensorInfo.normalize.mean[1] = 0.456f;
 	inputTensorInfo.normalize.mean[2] = 0.406f;
 	inputTensorInfo.normalize.norm[0] = 0.229f;
 	inputTensorInfo.normalize.norm[1] = 0.224f;
 	inputTensorInfo.normalize.norm[2] = 0.225f;
-#if 1
+#if 0
 	/* Convert to speeden up normalization:  ((src / 255) - mean) / norm  = src * 1 / (255 * norm) - (mean / norm) */
 	for (int32_t i = 0; i < 3; i++) {
 		inputTensorInfo.normalize.mean[i] /= inputTensorInfo.normalize.norm[i];
+		inputTensorInfo.normalize.norm[i] *= 255.0f;
+		inputTensorInfo.normalize.norm[i] = 1.0f / inputTensorInfo.normalize.norm[i];
+	}
+#endif
+#if 1
+	/* Convert to speeden up normalization:  ((src / 255) - mean) / norm = (src  - (mean * 255))  * (1 / (255 * norm)) */
+	for (int32_t i = 0; i < 3; i++) {
+		inputTensorInfo.normalize.mean[i] *= 255.0f;
 		inputTensorInfo.normalize.norm[i] *= 255.0f;
 		inputTensorInfo.normalize.norm[i] = 1.0f / inputTensorInfo.normalize.norm[i];
 	}
@@ -128,12 +137,11 @@ int32_t ClassificationEngine::invoke(const cv::Mat& originalMat, RESULT& result)
 	/* do resize and color conversion here because some inference engine doesn't support these operations */
 	cv::Mat imgSrc;
 	cv::resize(originalMat, imgSrc, cv::Size(inputTensorInfo.tensorDims.width, inputTensorInfo.tensorDims.height));
-	if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.swapColor) {
+	if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.imageInfo.swapColor) {
 		cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
 	}
 	inputTensorInfo.data = imgSrc.data;
-	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE_BGR;
-	inputTensorInfo.swapColor = false;
+	inputTensorInfo.dataType = InputTensorInfo::DATA_TYPE_IMAGE;
 	inputTensorInfo.imageInfo.width = imgSrc.cols;
 	inputTensorInfo.imageInfo.height = imgSrc.rows;
 	inputTensorInfo.imageInfo.channel = imgSrc.channels();
@@ -141,6 +149,8 @@ int32_t ClassificationEngine::invoke(const cv::Mat& originalMat, RESULT& result)
 	inputTensorInfo.imageInfo.cropY = 0;
 	inputTensorInfo.imageInfo.cropWidth = imgSrc.cols;
 	inputTensorInfo.imageInfo.cropHeight = imgSrc.rows;
+	inputTensorInfo.imageInfo.isBGR = true;
+	inputTensorInfo.imageInfo.swapColor = false;
 	if (m_inferenceHelper->preProcess(m_inputTensorList) != InferenceHelper::RET_OK) {
 		return RET_ERR;
 	}

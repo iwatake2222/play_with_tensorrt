@@ -23,6 +23,9 @@
 #ifdef INFERENCE_HELPER_ENABLE_TFLITE
 #include "InferenceHelperTensorflowLite.h"
 #endif
+#ifdef INFERENCE_HELPER_ENABLE_NCNN
+#include "InferenceHelperNcnn.h"
+#endif
 
 /*** Macro ***/
 #define TAG "InferenceHelper"
@@ -71,6 +74,12 @@ InferenceHelper* InferenceHelper::create(const InferenceHelper::HELPER_TYPE type
 		break;
 #endif
 #endif
+#ifdef INFERENCE_HELPER_ENABLE_NCNN
+	case NCNN:
+		PRINT("Use NCNN\n");
+		p = new InferenceHelperNcnn();
+		break;
+#endif
 	default:
 		PRINT_E("Unsupported inference helper type (%d)\n", type);
 		break;
@@ -106,11 +115,11 @@ void InferenceHelper::preProcessByOpenCV(const InputTensorInfo& inputTensorInfo,
 
 	/* Convert color type */
 	if (inputTensorInfo.imageInfo.channel == inputTensorInfo.tensorDims.channel) {
-		if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.swapColor) {
+		if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.imageInfo.swapColor) {
 			cv::cvtColor(imgSrc, imgSrc, cv::COLOR_BGR2RGB);
 		}
 	} else if (inputTensorInfo.imageInfo.channel == 3 && inputTensorInfo.tensorDims.channel == 1) {
-		cv::cvtColor(imgSrc, imgSrc, (inputTensorInfo.dataType == InputTensorInfo::DATA_TYPE_IMAGE_BGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
+		cv::cvtColor(imgSrc, imgSrc, (inputTensorInfo.imageInfo.isBGR) ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
 	} else if (inputTensorInfo.imageInfo.channel == 1 && inputTensorInfo.tensorDims.channel == 3) {
 		cv::cvtColor(imgSrc, imgSrc, cv::COLOR_GRAY2BGR);
 	}
@@ -120,8 +129,8 @@ void InferenceHelper::preProcessByOpenCV(const InputTensorInfo& inputTensorInfo,
 		if (inputTensorInfo.tensorDims.channel == 3) {
 #if 1
 			imgSrc.convertTo(imgSrc, CV_32FC3);
-			cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.norm)), imgSrc);
 			cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.mean)), imgSrc);
+			cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.norm)), imgSrc);
 #else
 			imgSrc.convertTo(imgSrc, CV_32FC3, 1.0 / 255);
 			cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 3>(inputTensorInfo.normalize.mean)), imgSrc);
@@ -130,8 +139,8 @@ void InferenceHelper::preProcessByOpenCV(const InputTensorInfo& inputTensorInfo,
 		} else {
 #if 1
 			imgSrc.convertTo(imgSrc, CV_32FC1);
-			cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.norm)), imgSrc);
 			cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.mean)), imgSrc);
+			cv::multiply(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.norm)), imgSrc);
 #else
 			imgSrc.convertTo(imgSrc, CV_32FC1, 1.0 / 255);
 			cv::subtract(imgSrc, cv::Scalar(cv::Vec<float_t, 1>(inputTensorInfo.normalize.mean)), imgSrc);

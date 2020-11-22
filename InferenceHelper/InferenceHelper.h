@@ -31,22 +31,22 @@ public:
 	~TensorInfo() {}
 
 public:
-	std::string name;
-	int32_t     id;
-	int32_t     tensorType;
+	std::string name;			// [In] Set the name of tensor
+	int32_t     id;				// [Out] Do not modify
+	int32_t     tensorType;		// [In] Set the type of tensor (e.g. TENSOR_TYPE_FP32)
 	struct {
 		int32_t batch;   // 0
 		int32_t width;   // 1
 		int32_t height;  // 2
 		int32_t channel; // 3
-	} tensorDims;
+	} tensorDims;				// InputTensorInfo: [In] Set the dimentions of tensor 
+								// OutputTensorInfo: [Out] The dimentions of tensor is set from model information
 };
 
 class InputTensorInfo : public TensorInfo {
 public:
 	enum {
-		DATA_TYPE_IMAGE_BGR,
-		DATA_TYPE_IMAGE_RGB,
+		DATA_TYPE_IMAGE,
 		DATA_TYPE_BLOB_NHWC,	// data which already finished preprocess(color conversion, resize, normalize, etc.)
 		DATA_TYPE_BLOB_NCHW,
 	};
@@ -54,8 +54,7 @@ public:
 public:
 	InputTensorInfo() {
 		data = nullptr;
-		dataType = DATA_TYPE_IMAGE_BGR;
-		swapColor = false;
+		dataType = DATA_TYPE_IMAGE;
 		imageInfo.width = 1;
 		imageInfo.height = 1;
 		imageInfo.channel = 1;
@@ -63,6 +62,8 @@ public:
 		imageInfo.cropY = 1;
 		imageInfo.cropWidth = 1;
 		imageInfo.cropHeight = 1;
+		imageInfo.isBGR = true;
+		imageInfo.swapColor = false;
 		for (int32_t i = 0; i < 3; i++) {
 			normalize.mean[i] = 0.0f;
 			normalize.norm[i] = 1.0f;
@@ -71,9 +72,8 @@ public:
 	~InputTensorInfo() {}
 
 public:
-	void* data;
-	int32_t dataType;
-	bool swapColor;
+	void* data;			// [In] Set the pointer to image/blob
+	int32_t dataType;	// [In] Set the type of data (e.g. DATA_TYPE_IMAGE)
 
 	struct {
 		int32_t width;
@@ -83,12 +83,14 @@ public:
 		int32_t cropY;
 		int32_t cropWidth;
 		int32_t cropHeight;
-	} imageInfo;              // used when dataType == DATA_TYPE_IMAGE
+		bool    isBGR;        // used when channel == 3 (true: BGR, false: RGB)
+		bool    swapColor;
+	} imageInfo;              // [In] used when dataType == DATA_TYPE_IMAGE
 
 	struct {
 		float_t mean[3];
 		float_t norm[3];
-	} normalize;              // used when dataType == DATA_TYPE_IMAGE
+	} normalize;              // [In] used when dataType == DATA_TYPE_IMAGE
 };
 
 
@@ -126,11 +128,11 @@ public:
 	}
 
 public:
-	void* data;
+	void* data;				// [Out] Pointer to the output data
 	struct {
 		float_t scale;
 		uint8_t zeroPoint;
-	} quant;
+	} quant;				// [Out] Parameters for dequantization (convert uint8 to float)
 
 private:
 	float_t* m_dataFp32;
@@ -155,7 +157,6 @@ public:
 		TENSORFLOW_LITE_GPU,
 		TENSORFLOW_LITE_XNNPACK,
 		NCNN,
-		NCNN_VULKAN,
 		MNN,
 		OPEN_CV,
 		OPEN_CV_GPU,
