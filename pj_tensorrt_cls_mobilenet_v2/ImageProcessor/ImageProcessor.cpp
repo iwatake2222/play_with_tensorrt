@@ -90,8 +90,8 @@ int32_t ImageProcessor_process(cv::Mat* mat, OUTPUT_PARAM* outputParam)
 		return -1;
 	}
 
-	const cv::Mat originalMat = *mat;
-	ClassificationEngine::RESULT result = { 0 };
+	cv::Mat& originalMat = *mat;
+	ClassificationEngine::RESULT result;
 	if (s_classificationEngine->invoke(originalMat, result) != ClassificationEngine::RET_OK) {
 		return -1;
 	}
