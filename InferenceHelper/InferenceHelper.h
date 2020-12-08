@@ -23,23 +23,23 @@ public:
 		name = "";
 		id = -1;
 		tensorType = TENSOR_TYPE_NONE;
-		tensorDims.batch = 1;
-		tensorDims.width = 1;
-		tensorDims.height = 1;
-		tensorDims.channel = 1;
+		tensorDims.batch = -1;
+		tensorDims.width = -1;
+		tensorDims.height = -1;
+		tensorDims.channel = -1;
 	}
 	~TensorInfo() {}
 
 public:
 	std::string name;			// [In] Set the name of tensor
-	int32_t     id;				// [Out] Do not modify
-	int32_t     tensorType;		// [In] Set the type of tensor (e.g. TENSOR_TYPE_FP32)
+	int32_t     id;				// [Out] Do not modify (Used in InferenceHelper)
+	int32_t     tensorType;		// [In] The type of tensor (e.g. TENSOR_TYPE_FP32)
 	struct {
 		int32_t batch;   // 0
 		int32_t width;   // 1
 		int32_t height;  // 2
 		int32_t channel; // 3
-	} tensorDims;				// InputTensorInfo: [In] Set the dimentions of tensor 
+	} tensorDims;				// InputTensorInfo: [In] The dimentions of tensor. (If -1 is set at initialize, the size is updated from model info.)
 								// OutputTensorInfo: [Out] The dimentions of tensor is set from model information
 };
 
@@ -55,13 +55,13 @@ public:
 	InputTensorInfo() {
 		data = nullptr;
 		dataType = DATA_TYPE_IMAGE;
-		imageInfo.width = 1;
-		imageInfo.height = 1;
-		imageInfo.channel = 1;
-		imageInfo.cropX = 1;
-		imageInfo.cropY = 1;
-		imageInfo.cropWidth = 1;
-		imageInfo.cropHeight = 1;
+		imageInfo.width = -1;
+		imageInfo.height = -1;
+		imageInfo.channel = -1;
+		imageInfo.cropX = -1;
+		imageInfo.cropY = -1;
+		imageInfo.cropWidth = -1;
+		imageInfo.cropHeight = -1;
 		imageInfo.isBGR = true;
 		imageInfo.swapColor = false;
 		for (int32_t i = 0; i < 3; i++) {
@@ -88,8 +88,8 @@ public:
 	} imageInfo;              // [In] used when dataType == DATA_TYPE_IMAGE
 
 	struct {
-		float_t mean[3];
-		float_t norm[3];
+		float mean[3];
+		float norm[3];
 	} normalize;              // [In] used when dataType == DATA_TYPE_IMAGE
 };
 
@@ -102,26 +102,29 @@ public:
 		quant.zeroPoint = 0;
 		m_dataFp32 = nullptr;
 	}
+
 	~OutputTensorInfo() {
 		if (m_dataFp32 != nullptr) {
 			delete[] m_dataFp32;
 		}
 	}
-	const float_t* getDataAsFloat() {
+
+	float* getDataAsFloat() {				/* Returned pointer should be with const, but returning pointer without const is convenient to create cv::Mat */
 		if (tensorType == TENSOR_TYPE_UINT8) {
 			int32_t dataNum = 1;
 			dataNum = tensorDims.batch * tensorDims.channel * tensorDims.height * tensorDims.width;
 			if (m_dataFp32 == nullptr) {
-				m_dataFp32 = new float_t[dataNum];
+				m_dataFp32 = new float[dataNum];
 			}
+#pragma omp parallel
 			for (int32_t i = 0; i < dataNum; i++) {
-				const uint8_t* valUint8 = (uint8_t*)data;
-				float_t valFloat = (valUint8[i] - quant.zeroPoint) * quant.scale;
+				const uint8_t* valUint8 = static_cast<const uint8_t*>(data);
+				float valFloat = (valUint8[i] - quant.zeroPoint) * quant.scale;
 				m_dataFp32[i] = valFloat;
 			}
 			return m_dataFp32;
 		} else if (tensorType == TENSOR_TYPE_FP32) {
-			return (float_t*)data;
+			return static_cast<float*>(data);
 		} else {
 			return nullptr;
 		}
@@ -130,12 +133,12 @@ public:
 public:
 	void* data;				// [Out] Pointer to the output data
 	struct {
-		float_t scale;
+		float scale;
 		uint8_t zeroPoint;
 	} quant;				// [Out] Parameters for dequantization (convert uint8 to float)
 
 private:
-	float_t* m_dataFp32;
+	float* m_dataFp32;
 };
 
 
