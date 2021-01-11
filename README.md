@@ -10,18 +10,17 @@ Sample projects to use TensorRT
 	- pj_tensorrt_cls_mobilenet_v2
 		- Classification using MobileNet v2
 
-
 ## How to build application
 ### Common 
 - Get source code
 	```sh
 	git clone https://github.com/iwatake2222/play_with_tensorrt.git
 	cd play_with_tensorrt
+	git submodule update --init
 	```
-
-- Download resource
-	- Download resource files (resource.zip) from https://github.com/iwatake2222/play_with_tensorrt/releases/ 
-	- Extract it to `resource`
+- Download models
+	- Download models (resource.zip) from https://github.com/iwatake2222/play_with_tensorrt/releases/ 
+	- Extract it to `resource/`
 
 ### Linux
 ```sh
@@ -92,11 +91,14 @@ cmake .. -DSPEED_TEST_ONLY=off
 5. Compile the project and run it
 6. If it succeeds, trt model file is generated. You can use it after that
 
-## Acknowledgements
-- Some code are retrieved from the following projects:
-	- https://github.com/nvidia/TensorRT (Apache-2.0 License)
-- This project includes models from the following projects:
-	- mobilenetv2-1.0
-		- https://github.com/onnx/models/raw/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx
-		- https://github.com/onnx/models/blob/master/vision/classification/synset.txt
+
+# License
+- Copyright 2020 iwatake2222
+- Licensed under the Apache License, Version 2.0
+	- [LICENSE](LICENSE)
+
+# Acknowledgements
+- This project utilizes OSS (Open Source Software)
+	- [NOTICE.md](NOTICE.md)
+
 
