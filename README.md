@@ -9,6 +9,13 @@ Sample projects to use TensorRT
 - Projects
 	- pj_tensorrt_cls_mobilenet_v2
 		- Classification using MobileNet v2
+	- pj_tensorrt_anime2sketch
+		- Test program for https://github.com/Mukosame/Anime2Sketch
+		- Please download model ( `anime2sketch_512x512.onnx` ) and locate the model into `resource/model` 
+			- https://github.com/PINTO0309/PINTO_model_zoo/tree/main/113_Anime2Sketch
+		- Tested environment is on Jetson Xavier NX (Jetpack 4.5.1)
+			- This model uses lots of memory
+			- It didn't work on Jetpack 4.4 (model conversion failed)
 
 ## How to build application
 ### Common 
@@ -35,18 +42,6 @@ make
 ```sh
 cmake .. -DSPEED_TEST_ONLY=off
 ```
-
-## Note for projects
-### pj_tensorrt_cls_mobilenet_v2
-none
-
-### pj_tensorrt_anime2sketch
-- Please download model ( `anime2sketch_512x512.onnx` ) and locate the model into `resource/model` 
-	- https://github.com/PINTO0309/PINTO_model_zoo
-	- https://github.com/PINTO0309/PINTO_model_zoo/tree/main/113_Anime2Sketch
-- Tested environment is on Jetson Xavier NX (Jetpack 4.5.1)
-	- This model uses lots of memory
-	- It didn't work on Jetpack 4.4 (model conversion failed)
 
 ## Configuration for TensorRT
 ### Model format
