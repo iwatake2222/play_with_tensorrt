@@ -17,10 +17,18 @@
 #include "ImageProcessor.h"
 
 /*** Macro ***/
-#define IMAGE_NAME   RESOURCE_DIR"/madoka.jpg"
+#define IMAGE_NAME   RESOURCE_DIR"/parrot.jpg"
 #define WORK_DIR     RESOURCE_DIR
 #define LOOP_NUM_FOR_TIME_MEASUREMENT 10
 
+/* https://github.com/JetsonHacksNano/CSI-Camera/blob/master/simple_camera.cpp */
+/* modified by iwatake2222 */
+std::string gstreamer_pipeline (int capture_width, int capture_height, int display_width, int display_height, int framerate, int flip_method) {
+    return "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(capture_width) + ", height=(int)" +
+           std::to_string(capture_height) + ", format=(string)NV12, framerate=(fraction)" + std::to_string(framerate) +
+           "/1 ! nvvidconv flip-method=" + std::to_string(flip_method) + " ! video/x-raw, width=(int)" + std::to_string(display_width) + ", height=(int)" +
+           std::to_string(display_height) + ", format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink drop=True";
+}
 
 int32_t main()
 {
@@ -65,11 +73,14 @@ int32_t main()
 	/* Initialize camera */
 	int32_t originalImageWidth = 640;
 	int32_t originalImageHeight = 480;
-
 	static cv::VideoCapture cap;
-	cap = cv::VideoCapture(0);
+#if 0
+	cap = cv::VideoCapture(1);
 	cap.set(cv::CAP_PROP_FRAME_WIDTH, originalImageWidth);
 	cap.set(cv::CAP_PROP_FRAME_HEIGHT, originalImageHeight);
+#else
+	cap = cv::VideoCapture(gstreamer_pipeline(originalImageWidth, originalImageHeight, originalImageWidth, originalImageHeight, 30, 2), cv::CAP_GSTREAMER);
+#endif
 	// cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('B', 'G', 'R', '3'));
 	cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
 	while (1) {
