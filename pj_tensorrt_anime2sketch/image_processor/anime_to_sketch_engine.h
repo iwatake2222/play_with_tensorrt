@@ -13,37 +13,37 @@
 #include <opencv2/opencv.hpp>
 
 /* for My modules */
-#include "InferenceHelper.h"
+#include "inference_helper.h"
 
 
 class Anime2SketchEngine {
 public:
 	enum {
-		RET_OK = 0,
-		RET_ERR = -1,
+		kRetOk = 0,
+		kRetErr = -1,
 	};
 
-	typedef struct RESULT_ {
+	typedef struct Result_ {
 		cv::Mat           image;
-		double            timePreProcess;		// [msec]
-		double            timeInference;		// [msec]
-		double            timePostProcess;	// [msec]
-		RESULT_() : timePreProcess(0), timeInference(0), timePostProcess(0)
+		double            time_pre_process;		// [msec]
+		double            time_inference;		// [msec]
+		double            time_post_process;	// [msec]
+		Result_() : time_pre_process(0), time_inference(0), time_post_process(0)
 		{}
-	} RESULT;
+	} Result;
 
 public:
 	Anime2SketchEngine() {}
 	~Anime2SketchEngine() {}
-	int32_t initialize(const std::string& workDir, const int32_t numThreads);
-	int32_t finalize(void);
-	int32_t invoke(const cv::Mat& originalMat, RESULT& result);
+	int32_t Initialize(const std::string& work_dir, const int32_t num_threads);
+	int32_t Finalize(void);
+	int32_t Process(const cv::Mat& original_mat, Result& result);
 
 
 private:
-	std::unique_ptr<InferenceHelper> m_inferenceHelper;
-	std::vector<InputTensorInfo> m_inputTensorList;
-	std::vector<OutputTensorInfo> m_outputTensorList;
+	std::unique_ptr<InferenceHelper> inference_helper_;
+	std::vector<InputTensorInfo> input_tensor_info_list_;
+	std::vector<OutputTensorInfo> output_tensor_info_list_;
 };
 
 #endif
