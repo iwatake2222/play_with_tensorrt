@@ -1,18 +1,18 @@
 This project utilizes the following OSS (Open Source Software):
 
 - TensorRT
-	- https://github.com/nvidia/TensorRT
-	- Copyright 2020 NVIDIA Corporation
-	- Licensed under the Apache License, Version 2.0
-	- Modification: yes
-	- Some code are retrieved from this repository
+   - https://github.com/nvidia/TensorRT
+   - Copyright 2020 NVIDIA Corporation
+   - Licensed under the Apache License, Version 2.0
+   - Modification: yes
+   - Some code are retrieved from this repository
 
 --------------------------------------------------------------------
 This project utilizes the following models:
 
 - mobilenetv2-1.0
-	- https://github.com/onnx/models/raw/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx
-	- https://github.com/onnx/models/blob/master/vision/classification/synset.txt
+   - https://github.com/onnx/models/raw/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx
+   - https://github.com/onnx/models/blob/master/vision/classification/synset.txt
 
 --------------------------------------------------------------------
 Terms of the Apache License, Version 2.0:
