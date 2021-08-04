@@ -21,13 +21,17 @@ Sample projects to use TensorRT
 ```
 ./main [input]
 
- - input = blank: use the default image file set in source code (main.cpp)
+ - input = blank
+    - use the default image file set in source code (main.cpp)
     - e.g. ./main
- - input = *.mp4, *.avi, *.webm: use video file
+ - input = *.mp4, *.avi, *.webm
+    - use video file
     - e.g. ./main test.mp4
- - input = *.jpg, *.png, *.bmp: use image file
+ - input = *.jpg, *.png, *.bmp
+    - use image file
     - e.g. ./main test.jpg
- - input = number (e.g. 0, 1, 2, ...): use camera
+ - input = number (e.g. 0, 1, 2, ...)
+    - use camera
     - e.g. ./main 0
 ```
 
@@ -50,11 +54,6 @@ mkdir build && cd build
 cmake ..
 make
 ./main
-```
-
-### Option (Camera input)
-```sh
-cmake .. -DSPEED_TEST_ONLY=off
 ```
 
 ## Configuration for TensorRT
