@@ -26,7 +26,7 @@
 #define PRINT_E(...) COMMON_HELPER_PRINT_E(TAG, __VA_ARGS__)
 
 /*** Global variable ***/
-std::unique_ptr<Anime2SketchEngine> s_anime2SketchEngine;
+std::unique_ptr<Anime2SketchEngine> s_engine;
 
 /*** Function ***/
 static cv::Scalar CreateCvColor(int32_t b, int32_t g, int32_t r) {
@@ -38,17 +38,17 @@ static cv::Scalar CreateCvColor(int32_t b, int32_t g, int32_t r) {
 }
 
 
-int32_t ImageProcessor::Initialize(const InputParam* input_param)
+int32_t ImageProcessor::Initialize(const InputParam& input_param)
 {
-    if (s_anime2SketchEngine) {
+    if (s_engine) {
         PRINT_E("Already initialized\n");
         return -1;
     }
 
-    s_anime2SketchEngine.reset(new Anime2SketchEngine());
-    if (s_anime2SketchEngine->Initialize(input_param->work_dir, input_param->num_threads) != Anime2SketchEngine::kRetOk) {
-        s_anime2SketchEngine->Finalize();
-        s_anime2SketchEngine.reset();
+    s_engine.reset(new Anime2SketchEngine());
+    if (s_engine->Initialize(input_param.work_dir, input_param.num_threads) != Anime2SketchEngine::kRetOk) {
+        s_engine->Finalize();
+        s_engine.reset();
         return -1;
     }
     return 0;
@@ -56,12 +56,12 @@ int32_t ImageProcessor::Initialize(const InputParam* input_param)
 
 int32_t ImageProcessor::Finalize(void)
 {
-    if (!s_anime2SketchEngine) {
+    if (!s_engine) {
         PRINT_E("Not initialized\n");
         return -1;
     }
 
-    if (s_anime2SketchEngine->Finalize() != Anime2SketchEngine::kRetOk) {
+    if (s_engine->Finalize() != Anime2SketchEngine::kRetOk) {
         return -1;
     }
 
@@ -71,7 +71,7 @@ int32_t ImageProcessor::Finalize(void)
 
 int32_t ImageProcessor::Command(int32_t cmd)
 {
-    if (!s_anime2SketchEngine) {
+    if (!s_engine) {
         PRINT_E("Not initialized\n");
         return -1;
     }
@@ -85,22 +85,21 @@ int32_t ImageProcessor::Command(int32_t cmd)
 }
 
 
-int32_t ImageProcessor::Process(cv::Mat* mat, OutputParam* output_param)
+int32_t ImageProcessor::Process(cv::Mat& mat, Result& result)
 {
-    if (!s_anime2SketchEngine) {
+    if (!s_engine) {
         PRINT_E("Not initialized\n");
         return -1;
     }
 
-    cv::Mat& original_mat = *mat;
-    Anime2SketchEngine::Result styleTransferResult;
-    s_anime2SketchEngine->Process(original_mat, styleTransferResult);
+    Anime2SketchEngine::Result style_transfer_result;
+    s_engine->Process(mat, style_transfer_result);
 
     /* Return the results */
-    original_mat = styleTransferResult.image;
-    output_param->time_pre_process = styleTransferResult.time_pre_process;
-    output_param->time_inference = styleTransferResult.time_inference;
-    output_param->time_post_process = styleTransferResult.time_post_process;
+    mat = style_transfer_result.image;
+    result.time_pre_process = style_transfer_result.time_pre_process;
+    result.time_inference = style_transfer_result.time_inference;
+    result.time_post_process = style_transfer_result.time_post_process;
 
     return 0;
 }

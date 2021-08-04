@@ -17,6 +17,20 @@ Sample projects to use TensorRT
             - This model uses lots of memory
             - It didn't work on Jetpack 4.4 (model conversion failed)
 
+## Usage
+```
+./main [input]
+
+ - input = blank: use the default image file set in source code (main.cpp)
+    - e.g. ./main
+ - input = *.mp4, *.avi, *.webm: use video file
+    - e.g. ./main test.mp4
+ - input = *.jpg, *.png, *.bmp: use image file
+    - e.g. ./main test.jpg
+ - input = number (e.g. 0, 1, 2, ...): use camera
+    - e.g. ./main 0
+```
+
 ## How to build application
 ### Common 
 - Get source code
