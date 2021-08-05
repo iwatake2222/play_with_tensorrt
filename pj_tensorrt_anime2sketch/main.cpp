@@ -55,19 +55,23 @@ static bool FindSourceImage(const std::string& input_name, cv::VideoCapture& cap
             return false;
         }
     } else {
-        int32_t cam_id = -1;
-        try {
-            cam_id = std::stoi(input_name);
+        if (input_name == "jetson") {
+            cap = cv::VideoCapture(gstreamer_pipeline(1280, 720, 1280, 720, 30, 2));
+        } else {
+            int32_t cam_id = -1;
+            try {
+                cam_id = std::stoi(input_name);
+            }
+            catch (...) {}
+            cap = (cam_id >= 0) ? cv::VideoCapture(cam_id): cv::VideoCapture(input_name);
+            cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+            cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+            cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
         }
-        catch (...) {}
-        cap = (cam_id >= 0) ? cv::VideoCapture(cam_id): cv::VideoCapture(input_name);     
         if (!cap.isOpened()) {
             printf("Unable to open camera: %s\n", input_name.c_str());
             return false;
         }
-        cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-        cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-        cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
     }
     return true;
 }

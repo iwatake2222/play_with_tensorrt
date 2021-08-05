@@ -33,6 +33,9 @@ Sample projects to use TensorRT
  - input = number (e.g. 0, 1, 2, ...)
     - use camera
     - e.g. ./main 0
+- input = jetson
+    - use camera via gstreamer on Jetson
+    - e.g. ./main jetson
 ```
 
 ## How to build application
