@@ -55,6 +55,32 @@ static cv::Scalar CreateCvColor(int32_t b, int32_t g, int32_t r)
 #endif
 }
 
+static void DrawText(cv::Mat& mat, const std::string& text, cv::Point pos, double font_scale, int32_t thickness, cv::Scalar color_front, cv::Scalar color_back, bool is_text_on_rect = true)
+{
+    int32_t baseline = 0;
+    cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, font_scale, thickness, &baseline);
+    baseline += thickness;
+    pos.y += textSize.height;
+    if (is_text_on_rect) {
+        cv::rectangle(mat, pos + cv::Point(0, baseline), pos + cv::Point(textSize.width, -textSize.height), color_back, -1);
+        cv::putText(mat, text, pos, cv::FONT_HERSHEY_SIMPLEX, font_scale, color_front, thickness);
+    } else {
+        cv::putText(mat, text, pos, cv::FONT_HERSHEY_SIMPLEX, font_scale, color_back, thickness * 3);
+        cv::putText(mat, text, pos, cv::FONT_HERSHEY_SIMPLEX, font_scale, color_front, thickness);
+    }
+}
+
+static void DrawFps(cv::Mat& mat, double time_inference, cv::Point pos, double font_scale, int32_t thickness, cv::Scalar color_front, cv::Scalar color_back, bool is_text_on_rect = true)
+{
+    char text[64];
+    static auto time_previous = std::chrono::steady_clock::now();
+    auto time_now = std::chrono::steady_clock::now();
+    double fps = 1e9 / (time_now - time_previous).count();
+    time_previous = time_now;
+    snprintf(text, sizeof(text), "FPS: %.1f, Inference: %.1f [ms]", fps, time_inference);
+    DrawText(mat, text, cv::Point(0, 0), 0.5, 2, CreateCvColor(0, 0, 0), CreateCvColor(180, 180, 180), true);
+}
+
 static void DrawText(cv::Mat& mat, const std::string& text, cv::Point pos, double font_scale, int32_t thickness, cv::Scalar color_front, cv::Scalar color_back)
 {
 #if 1
@@ -173,7 +199,9 @@ int32_t ImageProcessor::Process(cv::Mat& mat, ImageProcessor::Result& result)
         }
         num_track++;
     }
-    DrawText(mat, "DET: " + std::to_string(num_det) + ", TRACK: " + std::to_string(num_track), cv::Point(0, mat.rows - 10), 0.7, 2, CreateCvColor(0, 0, 0), CreateCvColor(220, 220, 220));
+    DrawText(mat, "DET: " + std::to_string(num_det) + ", TRACK: " + std::to_string(num_track), cv::Point(0, 20), 0.7, 2, CreateCvColor(0, 0, 0), CreateCvColor(220, 220, 220));
+
+    DrawFps(mat, det_result.time_inference, cv::Point(0, 0), 0.5, 2, CreateCvColor(0, 0, 0), CreateCvColor(180, 180, 180), true);
 
     /* Return the results */
     int32_t bbox_num = 0;
