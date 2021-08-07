@@ -38,7 +38,7 @@ static std::string gstreamer_pipeline (int capture_width, int capture_height, in
     return "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)" + std::to_string(capture_width) + ", height=(int)" +
            std::to_string(capture_height) + ", format=(string)NV12, framerate=(fraction)" + std::to_string(framerate) +
            "/1 ! nvvidconv flip-method=" + std::to_string(flip_method) + " ! video/x-raw, width=(int)" + std::to_string(display_width) + ", height=(int)" +
-           std::to_string(display_height) + ", format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink drop=True";
+           std::to_string(display_height) + ", format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink max-buffers=1 drop=True";
 }
 
 static bool FindSourceImage(const std::string& input_name, cv::VideoCapture& cap)
@@ -56,7 +56,7 @@ static bool FindSourceImage(const std::string& input_name, cv::VideoCapture& cap
         }
     } else {
         if (input_name == "jetson") {
-            cap = cv::VideoCapture(gstreamer_pipeline(1280, 720, 1280, 720, 30, 2));
+            cap = cv::VideoCapture(gstreamer_pipeline(1280, 720, 1280, 720, 60, 2));
         } else {
             int32_t cam_id = -1;
             try {
@@ -134,7 +134,7 @@ int32_t main(int argc, char* argv[])
 
     /* Create video writer to save output video */
     cv::VideoWriter writer;
-    writer = cv::VideoWriter("out.mp4", cv::VideoWriter::fourcc('M', 'P', '4', 'V'), (std::max)(10.0, cap.get(cv::CAP_PROP_FPS)), cv::Size(static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_WIDTH)), static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_HEIGHT))));
+    // writer = cv::VideoWriter("out.mp4", cv::VideoWriter::fourcc('M', 'P', '4', 'V'), (std::max)(10.0, cap.get(cv::CAP_PROP_FPS)), cv::Size(static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_WIDTH)), static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_HEIGHT))));
 
     /* Initialize image processor library */
     ImageProcessor::InputParam input_param = { WORK_DIR, 4 };

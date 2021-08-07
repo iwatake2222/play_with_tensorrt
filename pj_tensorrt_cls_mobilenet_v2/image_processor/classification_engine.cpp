@@ -17,6 +17,7 @@
 /* for My modules */
 #include "common_helper.h"
 #include "inference_helper.h"
+#include "inference_helper_tensorrt.h"      // to call SetDlaCore
 #include "classification_engine.h"
 
 /*** Macro ***/
@@ -64,6 +65,8 @@ int32_t ClassificationEngine::Initialize(const std::string& work_dir, const int3
     if (!inference_helper_) {
         return kRetErr;
     }
+    InferenceHelperTensorRt* p = dynamic_cast<InferenceHelperTensorRt*>(inference_helper_.get());
+    if (p) p->SetDlaCore(-1);  /* Use GPU */
     if (inference_helper_->SetNumThreads(num_threads) != InferenceHelper::kRetOk) {
         inference_helper_.reset();
         return kRetErr;

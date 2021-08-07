@@ -17,6 +17,7 @@
 /* for My modules */
 #include "common_helper.h"
 #include "inference_helper.h"
+#include "inference_helper_tensorrt.h"      // to call SetDlaCore
 #include "anime_to_sketch_engine.h"
 
 /*** Macro ***/
@@ -57,10 +58,11 @@ int32_t Anime2SketchEngine::Initialize(const std::string& work_dir, const int32_
 
     /* Create and Initialize Inference Helper */
     inference_helper_.reset(InferenceHelper::Create(InferenceHelper::kTensorrt));
-
     if (!inference_helper_) {
         return kRetErr;
     }
+    InferenceHelperTensorRt* p = dynamic_cast<InferenceHelperTensorRt*>(inference_helper_.get());
+    if (p) p->SetDlaCore(-1);  /* Use GPU */
     if (inference_helper_->SetNumThreads(num_threads) != InferenceHelper::kRetOk) {
         inference_helper_.reset();
         return kRetErr;
