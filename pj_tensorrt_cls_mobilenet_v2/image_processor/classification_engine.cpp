@@ -36,7 +36,7 @@
 #define IS_RGB        true
 #define OUTPUT_NAME  "mobilenetv20_output_flatten0_reshape0"
 
-#define LABEL_NAME   "imagenet_labels.txt"
+#define LABEL_NAME   "label_imagenet.txt"
 
 /*** Function ***/
 int32_t ClassificationEngine::Initialize(const std::string& work_dir, const int32_t num_threads)
