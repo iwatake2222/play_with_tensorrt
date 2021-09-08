@@ -1,9 +1,9 @@
 # Depth Estimation using LapDepth with TensorRT in C++
 Sample project for LapDepth (Monocular Depth Estimation Using Laplacian Pyramid-Based Depth Residuals)
 
-Click the image to open in YouTube. https://youtu.be/MfJVZM0F0y4
+Click the image to open in YouTube. https://youtu.be/ZPq7eYn-dWg
 
-[![00_doc/depth.jpg](00_doc/depth.jpg)](https://youtu.be/MfJVZM0F0y4)
+[![00_doc/depth.jpg](00_doc/depth.jpg)](https://youtu.be/ZPq7eYn-dWg)
 
 ## Target Environment, How to Build, How to Run
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
