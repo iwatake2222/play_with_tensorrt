@@ -104,7 +104,7 @@ int32_t ImageProcessor::Process(cv::Mat& mat, Result& result)
 
     /* Convert to colored depth map */
     cv::Mat mat_depth;
-    cv::applyColorMap(depth_result.mat_out, mat_depth, cv::COLORMAP_JET);
+    cv::applyColorMap(depth_result.mat_out, mat_depth, cv::COLORMAP_PLASMA);
 
     /* Create result image */
     //mat = mat_depth;

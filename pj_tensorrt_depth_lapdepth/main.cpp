@@ -28,6 +28,7 @@ limitations under the License.
 #include "image_processor.h"
 
 /*** Macro ***/
+static constexpr char kOutputVideoFilename[] = "";
 #define WORK_DIR                      RESOURCE_DIR
 #define DEFAULT_INPUT_IMAGE           RESOURCE_DIR"/dashcam_01.jpg"
 #define LOOP_NUM_FOR_TIME_MEASUREMENT 10
@@ -53,7 +54,6 @@ int32_t main(int argc, char* argv[])
 
     /* Create video writer to save output video */
     cv::VideoWriter writer;
-    // writer = cv::VideoWriter("out.mp4", cv::VideoWriter::fourcc('M', 'P', '4', 'V'), (std::max)(10.0, cap.get(cv::CAP_PROP_FPS)), cv::Size(static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_WIDTH)), static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_HEIGHT))));
 
     /* Initialize image processor library */
     ImageProcessor::InputParam input_param = { WORK_DIR, 4 };
@@ -84,6 +84,9 @@ int32_t main(int argc, char* argv[])
         const auto& time_image_process1 = std::chrono::steady_clock::now();
 
         /* Display result */
+        if (frame_cnt == 0 && kOutputVideoFilename[0] != '\0') {
+            writer = cv::VideoWriter(kOutputVideoFilename, cv::VideoWriter::fourcc('M', 'P', '4', 'V'), (std::max)(10.0, cap.get(cv::CAP_PROP_FPS)), cv::Size(image.cols, image.rows));
+        }
         if (writer.isOpened()) writer.write(image);
         cv::imshow("test", image);
 

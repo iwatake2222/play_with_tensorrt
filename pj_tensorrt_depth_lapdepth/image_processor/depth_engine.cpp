@@ -172,8 +172,8 @@ int32_t DepthEngine::Process(const cv::Mat& original_mat, Result& result)
     //cv::minMaxLoc(mat_out, &depth_min, &depth_max);
     //mat_out.convertTo(mat_out, CV_8UC1, 255. / (depth_max - depth_min), (-255. * depth_min) / (depth_max - depth_min));
     //mat_out.convertTo(mat_out, CV_8UC1);
-    mat_out.convertTo(mat_out, CV_8UC1, -4, 255);   /* experimentally deterined */
-    mat_out = mat_out(cv::Rect(0, static_cast<int32_t>(mat_out.rows * 0.18), mat_out.cols, static_cast<int32_t>(mat_out.rows * (1.0 - 0.18))));
+    mat_out.convertTo(mat_out, CV_8UC1, -5, 255);   /* experimentally deterined */
+    mat_out = mat_out(cv::Rect(0, static_cast<int32_t>(mat_out.rows * 0.2), mat_out.cols, static_cast<int32_t>(mat_out.rows * (1.0 - 0.2))));
     const auto& t_post_process1 = std::chrono::steady_clock::now();
 
     /* Return the results */
