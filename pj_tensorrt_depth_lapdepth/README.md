@@ -7,9 +7,8 @@ Sample project for LapDepth (Monocular Depth Estimation Using Laplacian Pyramid-
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
 2. Additional steps:
     - Convert the model to onnx format. Please refer to the following colab script
-        - http:
+        - https://github.com/iwatake2222/play_with_tensorrt/blob/master/pj_tensorrt_depth_lapdepth/00_doc/pytorch_pkl_2_onnx_LapDepth.ipynb
         - Notice: the original model is published under the GPL-3.0 license
-
     - Build  `pj_tensorrt_depth_lapdepth` project (this directory)
 
 ## Acknowledgements
