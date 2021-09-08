@@ -116,3 +116,5 @@ Sample projects to use TensorRT
 # Acknowledgements
 - This project utilizes OSS (Open Source Software)
     - [NOTICE.md](NOTICE.md)
+- Some images are retrieved from the followings:
+    - dashcam_00.jpg, dashcam_01.jpg (Copyright Dashcam Roadshow 2020. https://www.youtube.com/watch?v=tTuUjnISt9s )
