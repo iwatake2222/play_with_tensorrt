@@ -5,6 +5,13 @@ Sample projects to use TensorRT
 - Platform
     - Linux (aarch64)
         - Tested in Jetson Xavier NX (JetPack 4.6)
+    - Windows 10/11
+        - Install CUDA
+        - Install cuDNN
+            - Copy files into CUDA directory
+        - Install TensorRT
+            - Copy files into CUDA directory
+            - Or, set environment variable(TensorRT_ROOT = C:\Program Files\NVIDIA GPU Computing Toolkit\TensorRT\TensorRT-8.2.0.6), and add %TensorRT_ROOT%\lib to path
 
 ## Usage
 ```
