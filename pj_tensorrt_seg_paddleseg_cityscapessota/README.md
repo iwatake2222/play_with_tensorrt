@@ -1,9 +1,15 @@
 # Segmentation using PaddleSeg CityscapesSOTA with TensorRT in C++
 Sample project for PaddleSeg CityscapesSOTA (The implementation of Hierarchical Multi-Scale Attention based on PaddlePaddle)
 
-Click the image to open in YouTube. https://youtu.be/xxx
+Sample video: https://youtu.be/xxx
 
-[![00_doc/segmentation.jpg](00_doc/segmentation.jpg)](https://youtu.be/xxx)
+↓↓↓ 360x640 ↓↓↓
+
+![00_doc/segmentation_360x640.jpg](00_doc/segmentation_360x640.jpg)
+
+↓↓↓ 180x320 ↓↓↓
+
+![00_doc/segmentation_180x320.jpg](00_doc/segmentation_180x320.jpg)
 
 ## How to Run
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
