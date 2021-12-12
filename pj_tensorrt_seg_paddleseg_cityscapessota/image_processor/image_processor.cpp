@@ -35,7 +35,8 @@ limitations under the License.
 #include "image_processor.h"
 
 /*** Macro ***/
-static constexpr float kResultMixRatio = 1.0f;
+static constexpr float kResultMixRatio = 0.5f;
+static constexpr bool  kIsDrawAllResult = true;
 
 #define TAG "ImageProcessor"
 #define PRINT(...)   COMMON_HELPER_PRINT(TAG, __VA_ARGS__)
@@ -119,28 +120,40 @@ int32_t ImageProcessor::Process(cv::Mat& mat, Result& result)
         return -1;
     }
 
-    /* Convert to colored depth map */
+    /* Draw segmentation image for all the classes weighted by score */
+    cv::Mat mat_all_class = cv::Mat::zeros(segmentation_result.mat_out_list[0].size(), CV_8UC3);
+    if (kIsDrawAllResult) {
+        /* Pile all class */
 #pragma omp parallel for
-    for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
-        auto& mat_out = segmentation_result.mat_out_list[i];
-        cv::cvtColor(mat_out, mat_out, cv::COLOR_GRAY2BGR); /* 1channel -> 3 channel */
-        cv::multiply(mat_out, s_nice_color_generator.Get(i), mat_out);
-        mat_out.convertTo(mat_out, CV_8UC1);
+        for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
+            auto& mat_out = segmentation_result.mat_out_list[i];
+            cv::cvtColor(mat_out, mat_out, cv::COLOR_GRAY2BGR); /* 1channel -> 3 channel */
+            cv::multiply(mat_out, s_nice_color_generator.Get(i), mat_out);
+            mat_out.convertTo(mat_out, CV_8UC1);
+        }
+
+        // don't use parallel
+        for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
+            cv::add(mat_all_class, segmentation_result.mat_out_list[i], mat_all_class);
+        }
     }
 
-    // don't use parallel
-    cv::Mat mat_segmentation = cv::Mat::zeros(segmentation_result.mat_out_list[0].size(), CV_8UC3);
-    for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
-        auto& mat_out = segmentation_result.mat_out_list[i];
-        cv::add(mat_segmentation, mat_out, mat_segmentation);
-    }
+    /* Draw segmentation image for the class of the highest score */
+    cv::Mat& mat_max = segmentation_result.mat_out_max;
+    mat_max *= 255 / 19;    // to get nice color
+    cv::applyColorMap(mat_max, mat_max, cv::COLORMAP_JET);
 
     /* Create result image */
-    double scale = static_cast<double>(mat.cols) / mat_segmentation.cols;
-    cv::resize(mat_segmentation, mat_segmentation, cv::Size(), scale, scale);
-    cv::add(mat_segmentation * kResultMixRatio, mat * (1.0f - kResultMixRatio), mat_segmentation);
-    cv::vconcat(mat, mat_segmentation, mat);
-
+    double scale = static_cast<double>(mat.rows) / mat_max.rows;
+    cv::resize(mat_max, mat_max, cv::Size(), scale, scale);
+    cv::Mat mat_masked;
+    cv::add(mat_max * kResultMixRatio, mat * (1.0f - kResultMixRatio), mat_masked);
+    cv::hconcat(mat, mat_masked, mat);
+    if (kIsDrawAllResult) {
+        cv::resize(mat_all_class, mat_all_class, cv::Size(), scale, scale);
+        cv::hconcat(mat_all_class, mat_max, mat_all_class);
+        cv::vconcat(mat, mat_all_class, mat);
+    }
     DrawFps(mat, segmentation_result.time_inference, cv::Point(0, 0), 0.5, 2, CommonHelper::CreateCvColor(0, 0, 0), CommonHelper::CreateCvColor(180, 180, 180), true);
 
     /* Return the results */

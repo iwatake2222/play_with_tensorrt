@@ -151,10 +151,8 @@ int32_t SegmentationEngine::Process(const cv::Mat& original_mat, Result& result)
     const float* values = output_tensor_info_list_[0].GetDataAsFloat();
     //printf("%f, %f, %f\n", values[0], values[100], values[400]);
 
-    /* todo: can be better way to seprate channel*/
+    /* Score for all the classes */
     std::vector<cv::Mat> mat_separated_list(OUTPUT_CHANNEL);
-
-#if 0
 #pragma omp parallel for
     for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
         cv::Mat& mat = mat_separated_list[c];
@@ -168,36 +166,32 @@ int32_t SegmentationEngine::Process(const cv::Mat& original_mat, Result& result)
             }
         }
     }
-#else
 
-    for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
-        cv::Mat& mat = mat_separated_list[c];
-        mat = cv::Mat::zeros(output_height, output_width, CV_32FC1);
-    }
-
+    /* Argmax */
+    /* ref: https://github.com/PaddlePaddle/PaddleSeg/blob/release/2.3/paddleseg/core/infer.py#L244 */
+    cv::Mat mat_max = cv::Mat::zeros(output_height, output_width, CV_8UC1);
 #pragma omp parallel for
     for (int32_t y = 0; y < output_height; y++) {
         for (int32_t x = 0; x < output_width; x++) {
             float max_score = 0;
-            int32_t max_id = 0;
+            int32_t max_c = 0;
             for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
                 float val = values[y * output_width * OUTPUT_CHANNEL + x * OUTPUT_CHANNEL + c];
                 if (val > max_score) {
                     max_score = val;
-                    max_id = c;
+                    max_c = c;
                 }
             }
-            if (CommonHelper::Sigmoid(max_score) > 0.3) {
-                cv::Mat& mat = mat_separated_list[max_id];
-                mat.at<float>(cv::Point(x, y)) = 1.0;
-            }
+            //if (CommonHelper::Sigmoid(max_score) > 0.3) {
+                mat_max.at<uint8_t>(cv::Point(x, y)) = max_c;
+            //}
         }
     }
-#endif
     const auto& t_post_process1 = std::chrono::steady_clock::now();
 
     /* Return the results */
     result.mat_out_list = mat_separated_list;
+    result.mat_out_max = mat_max;
     result.time_pre_process = static_cast<std::chrono::duration<double>>(t_pre_process1 - t_pre_process0).count() * 1000.0;
     result.time_inference = static_cast<std::chrono::duration<double>>(t_inference1 - t_inference0).count() * 1000.0;
     result.time_post_process = static_cast<std::chrono::duration<double>>(t_post_process1 - t_post_process0).count() * 1000.0;;
