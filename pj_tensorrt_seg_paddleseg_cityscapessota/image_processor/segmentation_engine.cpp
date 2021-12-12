@@ -41,8 +41,10 @@ limitations under the License.
 
 /* Model parameters */
 #define MODEL_NAME  "paddleseg_cityscapessota_180x320.onnx"
-#define INPUT_NAME  "x"
 #define INPUT_DIMS  { 1, 3, 180, 320 }
+//#define MODEL_NAME  "paddleseg_cityscapessota_360x640.onnx"
+//#define INPUT_DIMS  { 1, 3, 360, 640 }
+#define INPUT_NAME  "x"
 #define IS_NCHW     true
 #define IS_RGB      true
 #define OUTPUT_NAME "tf.identity"
