@@ -11,6 +11,7 @@ Click the image to open in YouTube. https://youtu.be/xxx
     - Download the model using the following script
         - https://github.com/PINTO0309/PINTO_model_zoo/blob/main/201_CityscapesSOTA/download.sh
         - copy `saved_model_180x320/model_float32.onnx` to `resource/model/paddleseg_cityscapessota_180x320.onnx`
+        - Note: make sure you use `saved_model_180x320/model_float32.onnx` not `saved_model_180x320/paddleseg_cityscapessota_180x320.onnx`
     - Build  `pj_tensorrt_seg_paddleseg_cityscapessota` project (this directory)
 
 - Note:
