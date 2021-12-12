@@ -3,6 +3,8 @@ Sample project for PaddleSeg CityscapesSOTA (The implementation of Hierarchical 
 
 Sample video: https://youtu.be/CFFX-aS7IV4
 
+![00_doc/segmentation_360x640_youtube.jpg](00_doc/segmentation_360x640_youtube.jpg)
+
 ↓↓↓ 360x640 ↓↓↓
 
 ![00_doc/segmentation_360x640.jpg](00_doc/segmentation_360x640.jpg)
