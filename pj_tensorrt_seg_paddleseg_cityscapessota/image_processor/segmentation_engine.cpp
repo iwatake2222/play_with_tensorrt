@@ -153,22 +153,47 @@ int32_t SegmentationEngine::Process(const cv::Mat& original_mat, Result& result)
 
     /* todo: can be better way to seprate channel*/
     std::vector<cv::Mat> mat_separated_list(OUTPUT_CHANNEL);
+
+#if 0
+#pragma omp parallel for
     for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
         cv::Mat& mat = mat_separated_list[c];
-        mat = cv::Mat(output_height, output_width, CV_32FC1);
+        mat = cv::Mat::zeros(output_height, output_width, CV_32FC1);
         for (int32_t y = 0; y < output_height; y++) {
             for (int32_t x = 0; x < output_width; x++) {
                 float val = values[y * output_width * OUTPUT_CHANNEL + x * OUTPUT_CHANNEL + c];
-                /* todo */
-                //val = CommonHelper::Sigmoid(val);
-                //val = val < 0 ? 0.0 : val;
-                //val = val > 5 ? 1.0 : 0.0;
-                val /= 20;
-                val = (std::min)(255.0f, (std::max)(0.0f, val));
+                val /= 20;  /* todo */
+                val = (std::min)(1.0f, (std::max)(0.0f, val));
                 mat.at<float>(cv::Point(x, y)) = val;
             }
         }
     }
+#else
+
+    for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
+        cv::Mat& mat = mat_separated_list[c];
+        mat = cv::Mat::zeros(output_height, output_width, CV_32FC1);
+    }
+
+#pragma omp parallel for
+    for (int32_t y = 0; y < output_height; y++) {
+        for (int32_t x = 0; x < output_width; x++) {
+            float max_score = 0;
+            int32_t max_id = 0;
+            for (int32_t c = 0; c < OUTPUT_CHANNEL; c++) {
+                float val = values[y * output_width * OUTPUT_CHANNEL + x * OUTPUT_CHANNEL + c];
+                if (val > max_score) {
+                    max_score = val;
+                    max_id = c;
+                }
+            }
+            if (CommonHelper::Sigmoid(max_score) > 0.3) {
+                cv::Mat& mat = mat_separated_list[max_id];
+                mat.at<float>(cv::Point(x, y)) = 1.0;
+            }
+        }
+    }
+#endif
     const auto& t_post_process1 = std::chrono::steady_clock::now();
 
     /* Return the results */

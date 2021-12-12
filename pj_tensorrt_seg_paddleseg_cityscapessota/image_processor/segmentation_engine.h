@@ -38,7 +38,7 @@ public:
     };
 
     typedef struct Result_ {
-        std::vector<cv::Mat> mat_out_list;              // [height, width, 1]. value is 0 - 255
+        std::vector<cv::Mat> mat_out_list;              // [height, width, 1]. value is 0 - 1.0
         double            time_pre_process;		// [msec]
         double            time_inference;		// [msec]
         double            time_post_process;	// [msec]

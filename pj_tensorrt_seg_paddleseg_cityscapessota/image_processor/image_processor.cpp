@@ -21,10 +21,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 #include <array>
-#include <numeric>
 #include <algorithm>
 #include <chrono>
-#include <fstream>
 #include <memory>
 
 /* for OpenCV */
@@ -37,12 +35,15 @@ limitations under the License.
 #include "image_processor.h"
 
 /*** Macro ***/
+static constexpr float kResultMixRatio = 1.0f;
+
 #define TAG "ImageProcessor"
 #define PRINT(...)   COMMON_HELPER_PRINT(TAG, __VA_ARGS__)
 #define PRINT_E(...) COMMON_HELPER_PRINT_E(TAG, __VA_ARGS__)
 
 /*** Global variable ***/
 std::unique_ptr<SegmentationEngine> s_engine;
+CommonHelper::NiceColorGenerator s_nice_color_generator(16);
 
 /*** Function ***/
 static void DrawFps(cv::Mat& mat, double time_inference, cv::Point pos, double font_scale, int32_t thickness, cv::Scalar color_front, cv::Scalar color_back, bool is_text_on_rect = true)
@@ -56,33 +57,9 @@ static void DrawFps(cv::Mat& mat, double time_inference, cv::Point pos, double f
     CommonHelper::DrawText(mat, text, cv::Point(0, 0), 0.5, 2, CommonHelper::CreateCvColor(0, 0, 0), CommonHelper::CreateCvColor(180, 180, 180), true);
 }
 
-static cv::Scalar GetColorForId(int32_t id)
-{
-    static constexpr int32_t kGap = 17;          // better to select a number can divide 255
-    static constexpr int32_t kIncInGap = 255 / kGap;
-    uint32_t index = (id % kGap) * kIncInGap + id / kGap;
-    index %= 255;
-
-    static std::vector<cv::Scalar> color_list;
-    if (color_list.empty()) {
-        std::vector<uint8_t> seq_num(256);
-        std::iota(seq_num.begin(), seq_num.end(), 0);
-        cv::Mat mat_seq = cv::Mat(256, 1, CV_8UC1, seq_num.data());
-        cv::Mat mat_colormap;
-        cv::applyColorMap(mat_seq, mat_colormap, cv::COLORMAP_JET);
-        for (int32_t i = 0; i < 256; i++) {
-            const auto& bgr = mat_colormap.at<cv::Vec3b>(i);
-            color_list.push_back(CommonHelper::CreateCvColor(bgr[0], bgr[1], bgr[2]));
-        }
-    }
-    return color_list[index];
-}
-
 
 int32_t ImageProcessor::Initialize(const InputParam& input_param)
 {
-    GetColorForId(0);   // just to initialize color map
-
     if (s_engine) {
         PRINT_E("Already initialized\n");
         return -1;
@@ -143,24 +120,25 @@ int32_t ImageProcessor::Process(cv::Mat& mat, Result& result)
     }
 
     /* Convert to colored depth map */
-    cv::Mat mat_segmentation = cv::Mat::zeros(segmentation_result.mat_out_list[0].size(), CV_8UC3);
 #pragma omp parallel for
     for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
         auto& mat_out = segmentation_result.mat_out_list[i];
         cv::cvtColor(mat_out, mat_out, cv::COLOR_GRAY2BGR); /* 1channel -> 3 channel */
-        cv::multiply(mat_out, GetColorForId(i), mat_out);
+        cv::multiply(mat_out, s_nice_color_generator.Get(i), mat_out);
         mat_out.convertTo(mat_out, CV_8UC1);
     }
+
+    // don't use parallel
+    cv::Mat mat_segmentation = cv::Mat::zeros(segmentation_result.mat_out_list[0].size(), CV_8UC3);
     for (int32_t i = 0; i < segmentation_result.mat_out_list.size(); i++) {
         auto& mat_out = segmentation_result.mat_out_list[i];
         cv::add(mat_segmentation, mat_out, mat_segmentation);
     }
 
     /* Create result image */
-    //mat = mat_segmentation;
     double scale = static_cast<double>(mat.cols) / mat_segmentation.cols;
     cv::resize(mat_segmentation, mat_segmentation, cv::Size(), scale, scale);
-    cv::add(mat_segmentation, mat, mat_segmentation);
+    cv::add(mat_segmentation * kResultMixRatio, mat * (1.0f - kResultMixRatio), mat_segmentation);
     cv::vconcat(mat, mat_segmentation, mat);
 
     DrawFps(mat, segmentation_result.time_inference, cv::Point(0, 0), 0.5, 2, CommonHelper::CreateCvColor(0, 0, 0), CommonHelper::CreateCvColor(180, 180, 180), true);
