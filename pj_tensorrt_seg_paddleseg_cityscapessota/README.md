@@ -25,6 +25,19 @@ Sample video: https://youtu.be/CFFX-aS7IV4
 - Note:
     - Model conversion happens when you run the app for the first time, and it will takes time (It took about 40 minutes with RTX 3060 Ti)
 
+### Tested environment
+- Windows 11
+    - Core i7-11700 @ 2.5GHz x 8 cores (16 processors)
+    - GeForce RTX 3060 Ti
+    - Visual Studio 2019
+- Linux (Docker on WSL2 on Windows11)
+    - Core i7-11700 @ 2.5GHz x 8 cores (16 processors)
+    - GeForce RTX 3060 Ti
+    - nvcr.io/nvidia/tensorrt:21.11-py3
+- Linux
+    - Jetson Xavier NX
+    - JetPack 4.6
+
 ## Acknowledgements
 - https://github.com/PaddlePaddle/PaddleSeg/tree/release/2.3/contrib/CityscapesSOTA
 - https://github.com/PINTO0309/PINTO_model_zoo
