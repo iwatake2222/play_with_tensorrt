@@ -23,7 +23,7 @@ Sample video: https://youtu.be/CFFX-aS7IV4
     - Build  `pj_tensorrt_seg_paddleseg_cityscapessota` project (this directory)
 
 - Note:
-    - Model conversion happens when you run the app for the first time, and it will takes time (It took about 40 minutes with RTX 3060 Ti)
+    - Model conversion happens when you run the app for the first time, and it will take time (It took about 40 minutes with RTX 3060 Ti)
 
 ### Tested environment
 - Windows 11

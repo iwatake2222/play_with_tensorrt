@@ -47,6 +47,7 @@ namespace CommonHelper
 
 float Sigmoid(float x);
 float Logit(float x);
+float SoftMaxFast(const float* src, float* dst, int32_t length);
 
 }
 
