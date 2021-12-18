@@ -44,7 +44,7 @@ static constexpr bool  kIsDrawAllResult = true;
 
 /*** Global variable ***/
 std::unique_ptr<SegmentationEngine> s_engine;
-CommonHelper::NiceColorGenerator s_nice_color_generator(16);
+CommonHelper::NiceColorGenerator s_nice_color_generator(20);
 
 /*** Function ***/
 static void DrawFps(cv::Mat& mat, double time_inference, cv::Point pos, double font_scale, int32_t thickness, cv::Scalar color_front, cv::Scalar color_back, bool is_text_on_rect = true)
