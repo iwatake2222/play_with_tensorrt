@@ -4,11 +4,14 @@
     - FlyingThings
     - Middlebury
 
+### hitnet_middlebury_d400_480x640
+![image](https://user-images.githubusercontent.com/11009876/148783101-95ece05c-75ea-4f5c-aeea-8f44d16b1a67.png)
+
+### hitnet_eth3d_480x640
 ![00_doc/hitnet.jpg](00_doc/hitnet.jpg)
 
 https://user-images.githubusercontent.com/11009876/148779358-423a0421-b268-4b81-924b-319a0aa5e4c0.mp4
 
-* The above images are processed by hitnet_eth3d_480x640
 
 ## How to Run
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
