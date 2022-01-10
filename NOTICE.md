@@ -1,5 +1,28 @@
 This project utilizes the following OSS (Open Source Software):
 
+- The KITTI Vision Benchmark Suite
+   - http://www.cvlibs.net/datasets/kitti/raw_data.php
+   - Published under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License
+   - Modification: yes (combine stereo images and create video images)
+   - Some test images are retrieved from this repository
+
+- DrivingStereo
+   - https://drivingstereo-dataset.github.io/
+   - This dataset is released under the MIT license.
+   - Modification: yes (combine stereo images and create video images)
+   - Some test images are retrieved from this repository
+
+- ETH3D SLAM & Stereo Benchmarks 
+   - https://www.eth3d.net/datasets
+   - Licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+   - Modification: yes (combine stereo images and create video images)
+   - Some test images are retrieved from this repository
+
+- Middlebury Stereo Datasets
+   - https://vision.middlebury.edu/stereo/data/
+   - Modification: yes (combine stereo images and create video images)
+   - Some test images are retrieved from this repository
+
 - TensorRT
    - https://github.com/nvidia/TensorRT
    - Copyright 2020 NVIDIA Corporation

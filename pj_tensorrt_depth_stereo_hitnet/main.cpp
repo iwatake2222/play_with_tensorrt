@@ -29,7 +29,7 @@ limitations under the License.
 
 /*** Macro ***/
 #define WORK_DIR                      RESOURCE_DIR
-#define DEFAULT_INPUT_IMAGE           RESOURCE_DIR"/stereo_00.jpg"
+#define DEFAULT_INPUT_IMAGE           RESOURCE_DIR"/stereo_cones.png"
 #define LOOP_NUM_FOR_TIME_MEASUREMENT 10
 
 /*** Function ***/
