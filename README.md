@@ -37,10 +37,10 @@
 ```
 
 ## How to build a project
-### Requirements
+### 0. Requirements
 - OpenCV 4.x
 
-### Common
+### 1. Common
 - Download source code and pre-built libraries
     ```sh
     git clone https://github.com/iwatake2222/play_with_tensorrt.git
@@ -53,7 +53,7 @@
     sh ./download_resource.sh
     ```
 
-### Linux
+### 2-a. Linux
 - Build and run
     ```sh
     cd pj_tensorrt_cls_mobilenet_v2   # for example
@@ -62,6 +62,13 @@
     make
     ./main
     ```
+
+### 2-b. Windows (Visual Studio)
+- Configure and Generate a new project using cmake-gui for Visual Studio 2019 64-bit
+    - `Where is the source code` : path-to-play_with_tensorrt/pj_tensorrt_cls_mobilenet_v2	(for example)
+    - `Where to build the binaries` : path-to-build	(any)
+- Open `main.sln`
+- Set `main` project as a startup project, then build and run!
 
 ## Configuration for TensorRT
 ### Model format
