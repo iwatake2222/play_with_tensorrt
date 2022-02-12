@@ -40,7 +40,7 @@
 ### 0. Requirements
 - OpenCV 4.x
 
-### 1. Common
+### 1. Download
 - Download source code and pre-built libraries
     ```sh
     git clone https://github.com/iwatake2222/play_with_tensorrt.git
@@ -53,7 +53,7 @@
     sh ./download_resource.sh
     ```
 
-### 2-a. Linux
+### 2-a. Build in Linux
 - Build and run
     ```sh
     cd pj_tensorrt_cls_mobilenet_v2   # for example
@@ -63,7 +63,7 @@
     ./main
     ```
 
-### 2-b. Windows (Visual Studio)
+### 2-b. Build in Windows (Visual Studio)
 - Configure and Generate a new project using cmake-gui for Visual Studio 2019 64-bit
     - `Where is the source code` : path-to-play_with_tensorrt/pj_tensorrt_cls_mobilenet_v2	(for example)
     - `Where to build the binaries` : path-to-build	(any)
