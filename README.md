@@ -1,11 +1,13 @@
 # Play with TensorRT
-Sample projects to use TensorRT
+- Sample projects to use TensorRT in C++ for multi-platform
+- Typical project structure is like the following diagram
+    - ![00_doc/design.jpg](00_doc/design.jpg)
 
-## Target Environment
+## Target
 - Platform
+    - Linux (x64)
     - Linux (aarch64)
-        - Tested in Jetson Xavier NX (JetPack 4.6)
-    - Windows 10/11
+    - Windows (x64). Visual Studio 2019
         - Install CUDA
         - Install cuDNN
             - Copy files into CUDA directory
@@ -34,21 +36,28 @@ Sample projects to use TensorRT
     - e.g. ./main jetson
 ```
 
-## How to build application
-- Get source code
+## How to build a project
+### Requirements
+- OpenCV 4.x
+
+### Common
+- Download source code and pre-built libraries
     ```sh
     git clone https://github.com/iwatake2222/play_with_tensorrt.git
     cd play_with_tensorrt
     git submodule update --init
+    sh InferenceHelper/third_party/download_prebuilt_libraries.sh
     ```
 - Download models
-    - Download models (resource.zip) from https://github.com/iwatake2222/play_with_tensorrt/releases/ 
-    - Extract it to `resource/`
+    ```sh
+    sh ./download_resource.sh
+    ```
 
+### Linux
 - Build and run
     ```sh
     cd pj_tensorrt_cls_mobilenet_v2   # for example
-    mkdir build && cd build
+    mkdir -p build && cd build
     cmake ..
     make
     ./main
