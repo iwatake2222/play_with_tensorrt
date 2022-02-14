@@ -8,12 +8,6 @@
     - Linux (x64)
     - Linux (aarch64)
     - Windows (x64). Visual Studio 2019
-        - Install CUDA
-        - Install cuDNN
-            - Copy files into CUDA directory
-        - Install TensorRT
-            - Copy files into CUDA directory
-            - Or, set environment variable(TensorRT_ROOT = C:\Program Files\NVIDIA GPU Computing Toolkit\TensorRT\TensorRT-8.2.0.6), and add %TensorRT_ROOT%\lib to path
 
 ## Usage
 ```
@@ -39,6 +33,9 @@
 ## How to build a project
 ### 0. Requirements
 - OpenCV 4.x
+- CUDA + cuDNN
+- TensorRT 8.x
+    - In case you have build errors related to TensorRT location, modify cmake settings for it in `InferenceHelper/inference_helper/CMakeLists.txt`
 
 ### 1. Download
 - Download source code and pre-built libraries
@@ -71,6 +68,8 @@
 - Set `main` project as a startup project, then build and run!
 
 ## Configuration for TensorRT
+You don't need to change any configuration for TensorRT, but you can change it if you want.
+
 ### Model format
 - The model file name is specified in `xxx_engine.cpp` . Please find `MODEL_NAME` definition
 - `inference_helper_tensorrt.cpp` automatically converts model according to the model format (extension)
@@ -130,6 +129,14 @@
 5. Compile the project and run it
 6. If it succeeds, trt model file is generated. You can use it after that
 
+
+## Note
+- Install TensorRT in Windows
+    - cuDNN installation
+        - Copy all files into CUDA directory
+    - TensorRT installation
+        - Copy all files into CUDA directory
+        - Or, set environment variable(TensorRT_ROOT = C:\Program Files\NVIDIA GPU Computing Toolkit\TensorRT\TensorRT-8.2.0.6), and add %TensorRT_ROOT%\lib to path
 
 # License
 - Copyright 2020 iwatake2222

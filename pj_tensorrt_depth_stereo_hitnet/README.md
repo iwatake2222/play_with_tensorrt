@@ -25,7 +25,7 @@ https://user-images.githubusercontent.com/11009876/148779358-423a0421-b268-4b81-
         - default is ETH3
         - comment/uncomment the follwoing definitions: `MODEL_NAME` , `IS_GRAYSCALE` , `MAX_DISPLARITY`
     - Build  `pj_tensorrt_depth_stereo_hitnet` project (this directory)
-        - Note: Model conversion from ONNX to TensorRT may take time. It took 80 minutes in my PC (RTX 3060 Ti)
+        - Note: Model conversion from ONNX to TensorRT may take time. ~~It took 80 minutes in my PC (RTX 3060 Ti)~~
 
 ## Acknowledgements
 - https://github.com/google-research/google-research/tree/master/hitnet
