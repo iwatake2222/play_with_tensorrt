@@ -1,6 +1,8 @@
 # Depth Estimation (FSRE-Depth) with TensorRT in C++
 ![00_doc/demo.jpg](00_doc/demo.jpg)
 
+https://user-images.githubusercontent.com/11009876/167286511-2b111a36-f8bb-4e15-bbb1-b7d8ee25f2f6.mp4
+
 ## How to Run
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
 2. Additional steps:
