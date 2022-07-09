@@ -54,8 +54,6 @@ limitations under the License.
 #define IS_RGB      true
 #define OUTPUT_NAME "output"
 
-static constexpr int32_t kGridScaleList[] = { 8, 16, 32 };
-static constexpr int32_t kGridChannel = 3;
 static constexpr int32_t kNumberOfClass = 80;
 static constexpr int32_t kElementNumOfAnchor = kNumberOfClass + 5;    // x, y, w, h, bbox confidence, [class confidence]
 
@@ -124,41 +122,33 @@ int32_t DetectionEngine::Finalize()
 }
 
 
-void DetectionEngine::GetBoundingBox(const float* data, float scale_x, float  scale_y, int32_t grid_w, int32_t grid_h, std::vector<BoundingBox>& bbox_list)
+void DetectionEngine::GetBoundingBox(const float* data, int32_t anchor_box_num, float scale_x, float  scale_y, std::vector<BoundingBox>& bbox_list)
 {
     int32_t index = 0;
-    for (int32_t grid_y = 0; grid_y < grid_h; grid_y++) {
-        for (int32_t grid_x = 0; grid_x < grid_w; grid_x++) {
-            for (int32_t grid_c = 0; grid_c < kGridChannel; grid_c++) {
-                float box_confidence = data[index + 4];
-                if (box_confidence >= threshold_box_confidence_) {
-                    int32_t class_id = 0;
-                    float confidence = 0;
-                    for (int32_t class_index = 0; class_index < kNumberOfClass; class_index++) {
-                        float confidence_of_class = data[index + 5 + class_index];
-                        if (confidence_of_class > confidence) {
-                            confidence = confidence_of_class;
-                            class_id = class_index;
-                        }
-                    }
-
-                    if (confidence >= threshold_class_confidence_) {
-                        int32_t cx = static_cast<int32_t>((data[index + 0] + 0) * scale_x);
-                        int32_t cy = static_cast<int32_t>((data[index + 1] + 0) * scale_y);
-                        int32_t w = static_cast<int32_t>(data[index + 2] * scale_x);
-                        int32_t h = static_cast<int32_t>(data[index + 3] * scale_y);
-                        //int32_t cx = static_cast<int32_t>((data[index + 0] + grid_x) * scale_x);
-                        //int32_t cy = static_cast<int32_t>((data[index + 1] + grid_y) * scale_y);
-                        //int32_t w = static_cast<int32_t>(data[index + 2] * scale_x);
-                        //int32_t h = static_cast<int32_t>(data[index + 3] * scale_y);
-                        int32_t x = cx - w / 2;
-                        int32_t y = cy - h / 2;
-                        bbox_list.push_back(BoundingBox(class_id, "", confidence, x, y, w, h));
-                    }
+    for (int32_t i = 0; i < anchor_box_num; i++) {
+        float box_confidence = data[index + 4];
+        if (box_confidence >= threshold_box_confidence_) {
+            int32_t class_id = 0;
+            float confidence = 0;
+            for (int32_t class_index = 0; class_index < kNumberOfClass; class_index++) {
+                float confidence_of_class = data[index + 5 + class_index];
+                if (confidence_of_class > confidence) {
+                    confidence = confidence_of_class;
+                    class_id = class_index;
                 }
-                index += kElementNumOfAnchor;
+            }
+
+            if (confidence >= threshold_class_confidence_) {
+                int32_t cx = static_cast<int32_t>(data[index + 0] * scale_x);
+                int32_t cy = static_cast<int32_t>(data[index + 1] * scale_y);
+                int32_t w = static_cast<int32_t>(data[index + 2] * scale_x);
+                int32_t h = static_cast<int32_t>(data[index + 3] * scale_y);
+                int32_t x = cx - w / 2;
+                int32_t y = cy - h / 2;
+                bbox_list.push_back(BoundingBox(class_id, "", confidence, x, y, w, h));
             }
         }
+        index += kElementNumOfAnchor;
     }
 }
 
@@ -210,18 +200,14 @@ int32_t DetectionEngine::Process(const cv::Mat& original_mat, Result& result)
     /* Get boundig box */
     std::vector<BoundingBox> bbox_list;
     float* output_data = output_tensor_info_list_[0].GetDataAsFloat();
-    for (const auto& grid_scale : kGridScaleList) {
-        int32_t grid_w = input_tensor_info.GetWidth() / grid_scale;
-        int32_t grid_h = input_tensor_info.GetHeight() / grid_scale;
-        float scale_x = static_cast<float>(crop_w) / input_tensor_info.GetWidth();      /* scale to original image */
-        float scale_y = static_cast<float>(crop_h) / input_tensor_info.GetHeight();
-        GetBoundingBox(output_data, scale_x, scale_y, grid_w, grid_h, bbox_list);
-        output_data += grid_w * grid_h * kGridChannel * kElementNumOfAnchor;
-    }
+    int32_t anchor_box_num = output_tensor_info_list_[0].tensor_dims[1];
+    float scale_x = static_cast<float>(crop_w) / input_tensor_info.GetWidth();      /* scale to original image */
+    float scale_y = static_cast<float>(crop_h) / input_tensor_info.GetHeight();
+    GetBoundingBox(output_data, anchor_box_num, scale_x, scale_y, bbox_list);
 
     /* Adjust bounding box */
     for (auto& bbox : bbox_list) {
-        bbox.x += crop_x;  
+        bbox.x += crop_x;
         bbox.y += crop_y;
         bbox.label = label_list_[bbox.class_id];
     }

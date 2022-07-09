@@ -72,7 +72,7 @@ public:
 
 private:
     int32_t ReadLabel(const std::string& filename, std::vector<std::string>& label_list);
-    void GetBoundingBox(const float* data, float scale_x, float  scale_y, int32_t grid_w, int32_t grid_h, std::vector<BoundingBox>& bbox_list);
+    void GetBoundingBox(const float* data, int32_t anchor_box_num, float scale_x, float  scale_y, std::vector<BoundingBox>& bbox_list);
 
 private:
     std::unique_ptr<InferenceHelper> inference_helper_;
