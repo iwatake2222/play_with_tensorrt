@@ -41,16 +41,21 @@ limitations under the License.
 #define PRINT_E(...) COMMON_HELPER_PRINT_E(TAG, __VA_ARGS__)
 
 /* Model parameters */
-#define MODEL_NAME  "yolox_nano_480x640.onnx"
+#if 0
+#define MODEL_NAME  "yolov7-tiny_384x640.onnx"
+#define INPUT_DIMS  { 1, 3, 384, 640 }
+#else
+#define MODEL_NAME  "yolov7_736x1280.onnx"
+#define INPUT_DIMS  { 1, 3, 736, 1280 }
+#endif
 #define TENSORTYPE  TensorInfo::kTensorTypeFp32
 #define INPUT_NAME  "images"
-#define INPUT_DIMS  { 1, 3, 480, 640 }
 #define IS_NCHW     true
 #define IS_RGB      true
 #define OUTPUT_NAME "output"
 
 static constexpr int32_t kGridScaleList[] = { 8, 16, 32 };
-static constexpr int32_t kGridChannel = 1;
+static constexpr int32_t kGridChannel = 3;
 static constexpr int32_t kNumberOfClass = 80;
 static constexpr int32_t kElementNumOfAnchor = kNumberOfClass + 5;    // x, y, w, h, bbox confidence, [class confidence]
 
@@ -69,12 +74,13 @@ int32_t DetectionEngine::Initialize(const std::string& work_dir, const int32_t n
     InputTensorInfo input_tensor_info(INPUT_NAME, TENSORTYPE, IS_NCHW);
     input_tensor_info.tensor_dims = INPUT_DIMS;
     input_tensor_info.data_type = InputTensorInfo::kDataTypeImage;
-    input_tensor_info.normalize.mean[0] = 0.485f;
-    input_tensor_info.normalize.mean[1] = 0.456f;
-    input_tensor_info.normalize.mean[2] = 0.406f;
-    input_tensor_info.normalize.norm[0] = 0.229f;
-    input_tensor_info.normalize.norm[1] = 0.224f;
-    input_tensor_info.normalize.norm[2] = 0.225f;
+    /* normalize to [0.0, 1.0] */
+    input_tensor_info.normalize.mean[0] = 0.0f;
+    input_tensor_info.normalize.mean[1] = 0.0f;
+    input_tensor_info.normalize.mean[2] = 0.0f;
+    input_tensor_info.normalize.norm[0] = 1.0f;
+    input_tensor_info.normalize.norm[1] = 1.0f;
+    input_tensor_info.normalize.norm[2] = 1.0f;
     input_tensor_info_list_.push_back(input_tensor_info);
 
     /* Set output tensor info */
@@ -82,7 +88,7 @@ int32_t DetectionEngine::Initialize(const std::string& work_dir, const int32_t n
     output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME, TENSORTYPE));
 
     /* Create and Initialize Inference Helper */
-    // inference_helper_.reset(InferenceHelper::Create(InferenceHelper::kOpencv));
+    //inference_helper_.reset(InferenceHelper::Create(InferenceHelper::kOnnxRuntime));
     inference_helper_.reset(InferenceHelper::Create(InferenceHelper::kTensorrt));
 
     if (!inference_helper_) {
@@ -137,10 +143,14 @@ void DetectionEngine::GetBoundingBox(const float* data, float scale_x, float  sc
                     }
 
                     if (confidence >= threshold_class_confidence_) {
-                        int32_t cx = static_cast<int32_t>((data[index + 0] + grid_x) * scale_x);
-                        int32_t cy = static_cast<int32_t>((data[index + 1] + grid_y) * scale_y);
-                        int32_t w = static_cast<int32_t>(std::exp(data[index + 2]) * scale_x);
-                        int32_t h = static_cast<int32_t>(std::exp(data[index + 3]) * scale_y);
+                        int32_t cx = static_cast<int32_t>((data[index + 0] + 0) * scale_x);
+                        int32_t cy = static_cast<int32_t>((data[index + 1] + 0) * scale_y);
+                        int32_t w = static_cast<int32_t>(data[index + 2] * scale_x);
+                        int32_t h = static_cast<int32_t>(data[index + 3] * scale_y);
+                        //int32_t cx = static_cast<int32_t>((data[index + 0] + grid_x) * scale_x);
+                        //int32_t cy = static_cast<int32_t>((data[index + 1] + grid_y) * scale_y);
+                        //int32_t w = static_cast<int32_t>(data[index + 2] * scale_x);
+                        //int32_t h = static_cast<int32_t>(data[index + 3] * scale_y);
                         int32_t x = cx - w / 2;
                         int32_t y = cy - h / 2;
                         bbox_list.push_back(BoundingBox(class_id, "", confidence, x, y, w, h));
@@ -168,9 +178,9 @@ int32_t DetectionEngine::Process(const cv::Mat& original_mat, Result& result)
     int32_t crop_w = original_mat.cols;
     int32_t crop_h = original_mat.rows;
     cv::Mat img_src = cv::Mat::zeros(input_tensor_info.GetHeight(), input_tensor_info.GetWidth(), CV_8UC3);
-    //CommonHelper::CropResizeCvt(original_mat, img_src, crop_x, crop_y, crop_w, crop_h, IS_RGB, CommonHelper::kCropTypeStretch);
+    CommonHelper::CropResizeCvt(original_mat, img_src, crop_x, crop_y, crop_w, crop_h, IS_RGB, CommonHelper::kCropTypeStretch);
     //CommonHelper::CropResizeCvt(original_mat, img_src, crop_x, crop_y, crop_w, crop_h, IS_RGB, CommonHelper::kCropTypeCut);
-    CommonHelper::CropResizeCvt(original_mat, img_src, crop_x, crop_y, crop_w, crop_h, IS_RGB, CommonHelper::kCropTypeExpand);
+    //CommonHelper::CropResizeCvt(original_mat, img_src, crop_x, crop_y, crop_w, crop_h, IS_RGB, CommonHelper::kCropTypeExpand);
 
     input_tensor_info.data = img_src.data;
     input_tensor_info.data_type = InputTensorInfo::kDataTypeImage;
@@ -203,12 +213,11 @@ int32_t DetectionEngine::Process(const cv::Mat& original_mat, Result& result)
     for (const auto& grid_scale : kGridScaleList) {
         int32_t grid_w = input_tensor_info.GetWidth() / grid_scale;
         int32_t grid_h = input_tensor_info.GetHeight() / grid_scale;
-        float scale_x = static_cast<float>(grid_scale) * crop_w / input_tensor_info.GetWidth();      /* scale to original image */
-        float scale_y = static_cast<float>(grid_scale) * crop_h / input_tensor_info.GetHeight();
+        float scale_x = static_cast<float>(crop_w) / input_tensor_info.GetWidth();      /* scale to original image */
+        float scale_y = static_cast<float>(crop_h) / input_tensor_info.GetHeight();
         GetBoundingBox(output_data, scale_x, scale_y, grid_w, grid_h, bbox_list);
         output_data += grid_w * grid_h * kGridChannel * kElementNumOfAnchor;
     }
-
 
     /* Adjust bounding box */
     for (auto& bbox : bbox_list) {

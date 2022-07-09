@@ -56,9 +56,9 @@ public:
 
 public:
     DetectionEngine() {
-        threshold_box_confidence_ = 0.4f;
+        threshold_box_confidence_ = 0.2f;
         threshold_class_confidence_ = 0.2f;
-        threshold_nms_iou_ = 0.5f;
+        threshold_nms_iou_ = 0.6f;
     }
     ~DetectionEngine() {}
     int32_t Initialize(const std::string& work_dir, const int32_t num_threads);
