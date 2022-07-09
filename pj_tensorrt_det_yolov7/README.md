@@ -2,6 +2,9 @@
 Sample project to run YOLOv7 + SORT
 
 ![00_doc/demo.jpg](00_doc/demo.jpg)
+
+https://user-images.githubusercontent.com/11009876/178093238-a4d2f6a4-3498-48e1-b214-6af115514823.mp4
+
 *yolov7_736x1280 with TensorRT on GeForce RTX 3060 Ti*
 
 ## How to Run
