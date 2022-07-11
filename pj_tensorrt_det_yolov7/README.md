@@ -11,7 +11,7 @@ https://user-images.githubusercontent.com/11009876/178093238-a4d2f6a4-3498-48e1-
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
 2. Additional steps:
     - Download the model using the following script
-        - https://github.com/PINTO0309/PINTO_model_zoo/blob/main/307_YOLOv7/download.sh
+        - https://github.com/PINTO0309/PINTO_model_zoo/blob/main/307_YOLOv7/download_single_batch.sh
         - copy `yolov7_736x1280` to `resource/model/yolov7_736x1280`
         - copy `yolov7-tiny_384x640` to `resource/model/yolov7-tiny_384x640`
     - Build  `pj_tensorrt_det_yolov7` project (this directory)
