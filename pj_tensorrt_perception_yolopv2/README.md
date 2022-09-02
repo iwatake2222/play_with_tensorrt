@@ -8,6 +8,8 @@ https://user-images.githubusercontent.com/11009876/188130488-1f002976-4257-42f8-
 
 *yolopv2_736x1280 with TensorRT on GeForce RTX 3060 Ti*
 
+[Link to full video on YouTube](https://www.youtube.com/watch?v=VRnNNkuk_UY)
+
 ## How to Run
 1. Please follow the instruction: https://github.com/iwatake2222/play_with_tensorrt/blob/master/README.md
 2. Additional steps:
