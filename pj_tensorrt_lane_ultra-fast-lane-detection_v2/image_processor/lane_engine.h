@@ -65,7 +65,7 @@ public:
     int32_t Process(const cv::Mat& original_mat, Result& result);
 
     void GenerateAnchor();
-    std::vector<Line<float>> LaneEngine::Pred2Coords(const std::vector<float>& loc_row, const std::vector<int32_t>& loc_row_dims, const std::vector<float>& exist_row, const std::vector<int32_t>& exist_row_dims, 
+    std::vector<Line<float>> Pred2Coords(const std::vector<float>& loc_row, const std::vector<int32_t>& loc_row_dims, const std::vector<float>& exist_row, const std::vector<int32_t>& exist_row_dims, 
         const std::vector<float>& loc_col, const std::vector<int32_t>& loc_col_dims, const std::vector<float>& exist_col, const std::vector<int32_t>& exist_col_dims);
 
 private:
