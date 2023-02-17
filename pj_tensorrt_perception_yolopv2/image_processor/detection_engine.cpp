@@ -51,9 +51,6 @@ limitations under the License.
 #define OUTPUT_NAME_2 "pred0"
 #define OUTPUT_NAME_3 "pred1"
 #define OUTPUT_NAME_4 "pred2"
-#define OUTPUT_NAME_5 "anchor_grid0"
-#define OUTPUT_NAME_6 "anchor_grid1"
-#define OUTPUT_NAME_7 "anchor_grid2"
 
 /* from model_105_anchor_grid.npy */
 static constexpr float kAnchorGrid8[3][2] = { { 12, 16 }, { 19, 36 }, { 40, 28 } };
@@ -91,9 +88,6 @@ int32_t DetectionEngine::Initialize(const std::string& work_dir, const int32_t n
     output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_2, TENSORTYPE));
     output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_3, TENSORTYPE));
     output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_4, TENSORTYPE));
-    output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_5, TENSORTYPE));
-    output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_6, TENSORTYPE));
-    output_tensor_info_list_.push_back(OutputTensorInfo(OUTPUT_NAME_7, TENSORTYPE));
 
     /* Create and Initialize Inference Helper */
     //inference_helper_.reset(InferenceHelper::Create(InferenceHelper::kOnnxRuntime));
